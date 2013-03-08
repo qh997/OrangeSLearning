@@ -1,8 +1,10 @@
-;nasm -o myboot.bin myboot.asm 
-;dd if=myboot.bin of=boot.img bs=512 count=1 conv=notrunc
+;编译方法：nasm -o myboot.bin myboot.asm
+;制作镜像：dd if=myboot.bin of=boot.img bs=512 count=1 conv=notrunc
 
+; 字符串打印启始位置
 %define PrintStart(row, col) (80 * row + col) * 2
 
+; 描述符定义
 %macro Descriptor 3
     dw  %2 & 0FFFFh
     dw  %1 & 0FFFFh
@@ -12,6 +14,7 @@
     db  (%1 >> 24) & 0FFh
 %endmacro
 
+; 初始化 GDT
 %macro InitGDT 1
     mov word [%1 + 2], ax
     shr eax, 16
