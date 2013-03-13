@@ -15,20 +15,26 @@
 %endmacro
 
 ; 初始化 GDT
-%macro InitGDT 1
-    mov word [%1 + 2], ax
-    shr eax, 16
-    mov byte [%1 + 4], al
-    mov byte [%1 + 7], ah
+%macro InitGDT 2
+    xor    eax, eax
+    mov    ax, cs
+    shl    eax, 4
+    add    eax, %1
+    mov    word [%2 + 2], ax
+    shr    eax, 16
+    mov    byte [%2 + 4], al
+    mov    byte [%2 + 7], ah
 %endmacro
 
 org 07c00h
 jmp LEABLE_MAIN
 
+; GDT
 LEABLE_GDT:        Descriptor        0,                0,     0
 DESCRIPTOR_NORMAL: Descriptor        0,           0ffffh, 0092h
 DESCRIPTOR_CODE32: Descriptor        0, SegCode32Len - 1, 4098h
 DESCRIPTOR_CODE16: Descriptor        0,           0ffffh, 0098h
+DESCRIPTOR_DATA:   Descriptor        0,      DataLen - 1, 0092h
 DESCRIPTOR_5MB:    Descriptor 0500000h,           0ffffh, 0092h
 DESCRIPTOR_VEDIO:  Descriptor  0B8000h,           0FFFFh, 0092h
 
@@ -36,11 +42,24 @@ GdtLen  equ  $ - LEABLE_GDT
 GdtPtr  dw   GdtLen - 1
         dd   0
 
+; 选择子
 SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
 SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
 SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
+SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
 Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
 SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+
+; 数据
+ALIGN 32
+[BITS 32]
+LEABLE_DATA:
+    spValueReal:   dw    0
+    HELLO_MSG:     db    'Hello, Operating System!!'
+    LenHELLO_MSG   equ   $ - HELLO_MSG
+    ProMod_MSG:    db    'Hello, Protected Mode!'
+    LenProMod_MSG  equ   $ - ProMod_MSG
+    DataLen        equ   $ - LEABLE_DATA
 
 [BITS 16]
 LEABLE_MAIN:
@@ -73,18 +92,9 @@ LEABLE_MAIN:
         add   di, 2
     loop   SHOW
 
-    xor    eax, eax
-    mov    ax, cs
-    movzx  eax, ax
-    shl    eax, 4
-    add    eax, LEABLE_CODE16
-    InitGDT(DESCRIPTOR_CODE16)
-
-    xor    eax, eax
-    mov    ax, cs
-    shl    eax, 4
-    add    eax, LEABLE_CODE32
-    InitGDT(DESCRIPTOR_CODE32)
+    InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
+    InitGDT LEABLE_CODE32, DESCRIPTOR_CODE32
+    InitGDT LEABLE_DATA, DESCRIPTOR_DATA
 
     xor    eax, eax
     mov    ax, ds
@@ -184,13 +194,6 @@ LEABLE_CODE16:
 
 LEABLE_RETURN_REAL:
     jmp    0:LEABLE_REAL_RETURN
-
-[BITS 32]
-spValueReal dw 0
-HELLO_MSG: db 'Hello, Operating System!'
-LenHELLO_MSG  equ  $ - HELLO_MSG
-ProMod_MSG: db 'Hello, Protected Mode!'
-LenProMod_MSG  equ  $ - ProMod_MSG
 
 times 510 - ($ - $$) db 0
 dw 0aa55h
