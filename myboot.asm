@@ -25,93 +25,168 @@
 org 07c00h
 jmp LEABLE_MAIN
 
+LEABLE_GDT:        Descriptor        0,                0,     0
+DESCRIPTOR_NORMAL: Descriptor        0,           0ffffh, 0092h
+DESCRIPTOR_CODE32: Descriptor        0, SegCode32Len - 1, 4098h
+DESCRIPTOR_CODE16: Descriptor        0,           0ffffh, 0098h
+DESCRIPTOR_5MB:    Descriptor 0500000h,           0ffffh, 0092h
+DESCRIPTOR_VEDIO:  Descriptor  0B8000h,           0FFFFh, 0092h
+
+GdtLen  equ  $ - LEABLE_GDT
+GdtPtr  dw   GdtLen - 1
+        dd   0
+
+SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
+SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
+SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
+Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
+SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+
 [BITS 16]
-    GDT_HEAD: Descriptor 0, 0, 0
-    GDT_CODE32: Descriptor 0, SegCode32Len - 1, 0100000010011000b
-    GDT_VEDIO: Descriptor 0B8000h, 0FFFFh, 0000000010010010b
-
-    GdtLen  equ  $ - GDT_HEAD
-    GdtPtr  dw   GdtLen - 1
-            dd   0
-
-    SelectorC32  equ  GDT_CODE32 - GDT_HEAD
-    SelectorVDO  equ  GDT_VEDIO - GDT_HEAD
-
 LEABLE_MAIN:
-    mov ax, cs
-    mov ds, ax
-    mov es, ax
-    mov sp, 0100h
+    mov    ax, cs
+    mov    ds, ax
+    mov    es, ax
+    mov    ss, ax
+    mov    sp, 0100h
+    mov    [LEABLE_REAL_RETURN + 3], ax
+    mov    [spValueReal], sp
 
-    mov ax, 0B800h
-    mov gs, ax
-    mov cx, 0FFFFh
-    xor di, di
-    xor ax, ax
+    mov    ax, 0B800h
+    mov    gs, ax
+    mov    cx, 0FFFFh
+    xor    di, di
+    xor    ax, ax
 
     CLS:
-        mov [gs:di], ax
-        add di, 2
-    loop CLS
-    mov si, HELLO_MSG
-    mov di, PrintStart(0, 0)
-    mov ah, 0Ch
-    mov cx, LenHELLO_MSG
+        mov    [gs:di], ax
+        add    di, 2
+    loop   CLS
+    mov    si, HELLO_MSG
+    mov    di, PrintStart(0, 0)
+    mov    ah, 0Ah
+    mov    cx, LenHELLO_MSG
     cld
     SHOW:
         lodsb
-        mov [gs:di], ax
-        add di, 2
-    loop SHOW
+        mov   [gs:di], ax
+        add   di, 2
+    loop   SHOW
 
-    xor eax, eax
-    mov ax, cs
-    shl eax, 4
-    add eax, LEABLE_CODE32
-    InitGDT(GDT_CODE32)
+    xor    eax, eax
+    mov    ax, cs
+    movzx  eax, ax
+    shl    eax, 4
+    add    eax, LEABLE_CODE16
+    InitGDT(DESCRIPTOR_CODE16)
 
-    xor eax, eax
-    mov ax, ds
-    shl ax, 4
-    add ax, GDT_HEAD
-    mov dword [GdtPtr + 2], eax
-    lgdt [GdtPtr]
+    xor    eax, eax
+    mov    ax, cs
+    shl    eax, 4
+    add    eax, LEABLE_CODE32
+    InitGDT(DESCRIPTOR_CODE32)
+
+    xor    eax, eax
+    mov    ax, ds
+    shl    ax, 4
+    add    ax, LEABLE_GDT
+    mov    dword [GdtPtr + 2], eax
+    lgdt   [GdtPtr]
 
     cli
-    in al, 92h
-    or al, 00000010b
-    out 92h, al
 
-    mov eax, cr0
-    or ax, 1
-    mov cr0, eax
+    in     al, 92h
+    or     al, 00000010b
+    out    92h, al
 
-    jmp dword SelectorC32:0
+    mov    eax, cr0
+    or     ax, 1
+    mov    cr0, eax
 
-    jmp $
+    jmp   dword SelectorC32:0
+
+LEABLE_REAL_RETURN:
+    mov    ax, cs
+    mov    ds, ax
+    mov    es, ax
+    mov    ss, ax
+
+    mov    sp, [spValueReal]
+
+    in     al, 92h
+    and    al, 11111101b
+    out    92h, al
+
+    sti
+
+    xor    eax, eax
+    mov    ax, 0B800h
+    mov    gs, ax
+    mov    edi, PrintStart(3, 0)
+    mov    ah, 0Ah
+    mov    al, 'R'
+    mov    [gs:edi], ax
+
+    jmp    $
 
 [BITS 32]
 LEABLE_CODE32:
-    mov ax, SelectorVDO
-    mov gs, ax
-    xor edi, edi
-    xor esi, esi
-    mov edi, PrintStart(1, 0)
-    mov ah, 0Ch
-    mov ecx, LenProMod_MSG
-    mov esi, ProMod_MSG
+    mov    ax, SelectorVDO
+    mov    gs, ax
+    xor    edi, edi
+    xor    esi, esi
+    mov    edi, PrintStart(1, 0)
+    mov    ah, 0Ch
+    mov    ecx, LenProMod_MSG
+    mov    esi, ProMod_MSG
 
     cld
     SHOW2:
         lodsb
-        mov [gs:edi], ax
-        add edi, 2
+        mov    [gs:edi], ax
+        add    edi, 2
     loop SHOW2
 
-    jmp $
+    mov    ax, Selector5MB
+    mov    es, ax
+
+    mov    al, [es:0]
+    add    al, '0'
+    mov    ah, 0Ch
+    mov    edi, PrintStart(2, 0)
+    mov    [gs:edi], ax
+
+    mov    al, 7
+    mov    [es:0], al
+
+    mov    al, [es:0]
+    add    al, '0'
+    mov    ah, 0Ch
+    mov    edi, PrintStart(2, 2)
+    mov    [gs:edi], ax
+
+    jmp    SelectorC16:0
+
 SegCode32Len  equ  $ - LEABLE_CODE32
 
+[BITS 16]
+LEABLE_CODE16:
+    mov    ax, SelectorNML
+    mov    ds, ax
+    mov    es, ax
+    mov    fs, ax
+    mov    gs, ax
+    mov    ss, ax
+
+    mov    eax, cr0
+    and    ax, 11111110b
+    mov    cr0, eax
+
+LEABLE_RETURN_REAL:
+    jmp    0:LEABLE_REAL_RETURN
+
 [BITS 32]
+spValueReal dw 0
 HELLO_MSG: db 'Hello, Operating System!'
 LenHELLO_MSG  equ  $ - HELLO_MSG
 ProMod_MSG: db 'Hello, Protected Mode!'
