@@ -1,5 +1,5 @@
-; 编译方法：nasm -o myboot.bin myboot.asm
-; 制作镜像：dd if=myboot.bin of=boot.img bs=512 count=1 conv=notrunc
+; 编译方法：nasm -o mycom.com mycom.asm
+; 复制文件：./copy_com.sh
 
 ; 字符串打印启始位置
 %define PrintStart(row, col) (80 * row + col) * 2
@@ -26,17 +26,18 @@
     mov    byte [%2 + 7], ah
 %endmacro
 
-org 07c00h
-jmp LEABLE_MAIN
+org 0100h
+jmp LEABLE_BEGIN
 
 ; GDT
-LEABLE_GDT:        Descriptor        0,                0,     0
-DESCRIPTOR_NORMAL: Descriptor        0,           0ffffh, 0092h
-DESCRIPTOR_CODE32: Descriptor        0, SegCode32Len - 1, 4098h
-DESCRIPTOR_CODE16: Descriptor        0,           0ffffh, 0098h
-DESCRIPTOR_DATA:   Descriptor        0,      DataLen - 1, 0092h
-DESCRIPTOR_5MB:    Descriptor 0500000h,           0ffffh, 0092h
-DESCRIPTOR_VEDIO:  Descriptor  0B8000h,           0FFFFh, 0092h
+[SECTION .gdt]
+LEABLE_GDT:        Descriptor        0,             0,     0
+DESCRIPTOR_NORMAL: Descriptor        0,        0ffffh, 0092h
+DESCRIPTOR_CODE32: Descriptor        0, Code32Len - 1, 4098h
+DESCRIPTOR_CODE16: Descriptor        0,        0ffffh, 0098h
+DESCRIPTOR_DATA:   Descriptor        0,   DataLen - 1, 0092h
+DESCRIPTOR_5MB:    Descriptor 0500000h,        0ffffh, 0092h
+DESCRIPTOR_VEDIO:  Descriptor  0B8000h,        0FFFFh, 0092h
 
 GdtLen  equ  $ - LEABLE_GDT
 GdtPtr  dw   GdtLen - 1
@@ -51,6 +52,7 @@ Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
 SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
 
 ; 数据
+[SECTION .data1]
 ALIGN 32
 [BITS 32]
 LEABLE_DATA:
@@ -61,14 +63,15 @@ LEABLE_DATA:
     LenProMod_MSG  equ   $ - ProMod_MSG
     DataLen        equ   $ - LEABLE_DATA
 
+[SECTION .s16]
 [BITS 16]
-LEABLE_MAIN:
+LEABLE_BEGIN:
     mov    ax, cs
     mov    ds, ax
     mov    es, ax
     mov    ss, ax
     mov    sp, 0100h
-    mov    [LEABLE_REAL_RETURN + 3], ax
+    mov    [LEABLE_BACK_REAL + 3], ax
     mov    [spValueReal], sp
 
     mov    ax, 0B800h
@@ -77,10 +80,6 @@ LEABLE_MAIN:
     xor    di, di
     xor    ax, ax
 
-    CLS:
-        mov    [gs:di], ax
-        add    di, 2
-    loop   CLS
     mov    si, HELLO_MSG
     mov    di, PrintStart(0, 0)
     mov    ah, 0Ah
@@ -92,8 +91,8 @@ LEABLE_MAIN:
         add   di, 2
     loop   SHOW
 
-    InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
     InitGDT LEABLE_CODE32, DESCRIPTOR_CODE32
+    InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
     InitGDT LEABLE_DATA, DESCRIPTOR_DATA
 
     xor    eax, eax
@@ -110,10 +109,10 @@ LEABLE_MAIN:
     out    92h, al
 
     mov    eax, cr0
-    or     ax, 1
+    or     eax, 1
     mov    cr0, eax
 
-    jmp   dword SelectorC32:0
+    jmp    dword SelectorC32:0
 
 LEABLE_REAL_RETURN:
     mov    ax, cs
@@ -137,8 +136,11 @@ LEABLE_REAL_RETURN:
     mov    al, 'R'
     mov    [gs:edi], ax
 
-    jmp    $
+    xor    eax, eax
+    mov    ax, 4c00h
+    int    21h
 
+[SECTION .s32]
 [BITS 32]
 LEABLE_CODE32:
     mov    ax, SelectorVDO
@@ -177,8 +179,10 @@ LEABLE_CODE32:
 
     jmp    SelectorC16:0
 
-SegCode32Len  equ  $ - LEABLE_CODE32
+Code32Len  equ  $ - LEABLE_CODE32
 
+[SECTION .s16code]
+ALIGN 32
 [BITS 16]
 LEABLE_CODE16:
     mov    ax, SelectorNML
@@ -189,11 +193,8 @@ LEABLE_CODE16:
     mov    ss, ax
 
     mov    eax, cr0
-    and    ax, 11111110b
+    and    al, 11111110b
     mov    cr0, eax
 
-LEABLE_RETURN_REAL:
+LEABLE_BACK_REAL:
     jmp    0:LEABLE_REAL_RETURN
-
-times 510 - ($ - $$) db 0
-dw 0aa55h
