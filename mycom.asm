@@ -31,27 +31,29 @@ jmp LEABLE_BEGIN
 
 ; GDT
 [SECTION .gdt]
-LEABLE_GDT:        Descriptor        0,             0,     0
-DESCRIPTOR_NORMAL: Descriptor        0,        0ffffh, 0092h
-DESCRIPTOR_CODE32: Descriptor        0, Code32Len - 1, 4098h
-DESCRIPTOR_CODE16: Descriptor        0,        0ffffh, 0098h
-DESCRIPTOR_DATA:   Descriptor        0,   DataLen - 1, 0092h
-DESCRIPTOR_STACK:  Descriptor        0,    TopOfStack, 4093h
-DESCRIPTOR_5MB:    Descriptor 0500000h,        0ffffh, 0092h
-DESCRIPTOR_VEDIO:  Descriptor  0B8000h,        0FFFFh, 0092h
+    LEABLE_GDT:        Descriptor        0,             0,     0
+    DESCRIPTOR_NORMAL: Descriptor        0,        0ffffh, 0092h
+    DESCRIPTOR_CODE32: Descriptor        0, Code32Len - 1, 4098h
+    DESCRIPTOR_CODE16: Descriptor        0,        0ffffh, 0098h
+    DESCRIPTOR_DATA:   Descriptor        0,   DataLen - 1, 0092h
+    DESCRIPTOR_STACK:  Descriptor        0,    TopOfStack, 4093h
+    DESCRIPTOR_5MB:    Descriptor 0500000h,        0ffffh, 0092h
+    DESCRIPTOR_LDT:    Descriptor        0,    LdtLen - 1, 0082h
+    DESCRIPTOR_VEDIO:  Descriptor  0B8000h,        0FFFFh, 0092h
 
-GdtLen  equ  $ - LEABLE_GDT
-GdtPtr: dw   GdtLen - 1
-        dd   0
+    GdtLen  equ  $ - LEABLE_GDT
+    GdtPtr: dw   GdtLen - 1
+            dd   0
 
-; 选择子
-SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
-SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
-SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
-SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
-SelectorSTK  equ  DESCRIPTOR_STACK  - LEABLE_GDT
-Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
-SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+    ; 选择子
+    SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
+    SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
+    SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
+    SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
+    SelectorSTK  equ  DESCRIPTOR_STACK  - LEABLE_GDT
+    Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
+    SelectorLDT  equ  DESCRIPTOR_LDT    - LEABLE_GDT
+    SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
 
 ; 数据
 [SECTION .data1]
@@ -67,6 +69,7 @@ LEABLE_DATA:
     OfffsetStrT    equ   StrTest - $$
     DataLen        equ   $ - LEABLE_DATA
 
+; 堆栈
 [SECTION .gs]
 ALIGN 32
 [BITS 32]
@@ -106,6 +109,8 @@ LEABLE_BEGIN:
     InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
     InitGDT LEABLE_DATA, DESCRIPTOR_DATA
     InitGDT LEABLE_STACK, DESCRIPTOR_STACK
+    InitGDT LEABLE_LDT, DESCRIPTOR_LDT
+    InitGDT LEABLE_CODE_A, DESCRIPTOR_LDT_CODEA
 
     xor    eax, eax
     mov    ax, ds
@@ -143,7 +148,7 @@ LEABLE_REAL_RETURN:
     xor    eax, eax
     mov    ax, 0B800h
     mov    gs, ax
-    mov    edi, DispStart(4, 0)
+    mov    edi, DispStart(4, 15)
     mov    ah, 0Ah
     mov    al, 'R'
     mov    [gs:edi], ax
@@ -191,7 +196,10 @@ LEABLE_CODE32:
 
     call   Read5MB
 
-    jmp    SelectorC16:0
+    mov    ax, SelectorLDT
+    lldt   ax
+
+    jmp    SelectorLDTCodeA:0
 
 Read5MB:
     push   esi
@@ -286,3 +294,29 @@ LEABLE_CODE16:
 
 LEABLE_BACK_REAL:
     jmp    0:LEABLE_REAL_RETURN
+
+[SECTION .ldt]
+ALIGN 32
+LEABLE_LDT:
+    DESCRIPTOR_LDT_CODEA:  Descriptor  0, CodeALen - 1, 4098h
+
+    LdtLen  equ  $ - LEABLE_LDT
+
+    ; 选择子
+    SelectorLDTCodeA  equ  DESCRIPTOR_LDT_CODEA - LEABLE_LDT + 4
+
+[SECTION .la]
+ALIGN 32
+[BITS 32]
+LEABLE_CODE_A:
+    mov    ax, SelectorVDO
+    mov    gs, ax
+
+    mov    edi, DispStart(4, 0)
+    mov    ah, 0Ch
+    mov    al, 'L'
+    mov    [gs:edi], ax
+
+    jmp    SelectorC16:0
+
+CodeALen  equ  $ - LEABLE_CODE_A
