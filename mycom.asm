@@ -2,7 +2,7 @@
 ; 复制文件：./copy_com.sh
 
 ; 字符串打印启始位置
-%define PrintStart(row, col) (80 * row + col) * 2
+%define DispStart(row, col) (80 * row + col) * 2
 
 ; 描述符定义
 %macro Descriptor 3
@@ -36,11 +36,12 @@ DESCRIPTOR_NORMAL: Descriptor        0,        0ffffh, 0092h
 DESCRIPTOR_CODE32: Descriptor        0, Code32Len - 1, 4098h
 DESCRIPTOR_CODE16: Descriptor        0,        0ffffh, 0098h
 DESCRIPTOR_DATA:   Descriptor        0,   DataLen - 1, 0092h
+DESCRIPTOR_STACK:  Descriptor        0,    TopOfStack, 4093h
 DESCRIPTOR_5MB:    Descriptor 0500000h,        0ffffh, 0092h
 DESCRIPTOR_VEDIO:  Descriptor  0B8000h,        0FFFFh, 0092h
 
 GdtLen  equ  $ - LEABLE_GDT
-GdtPtr  dw   GdtLen - 1
+GdtPtr: dw   GdtLen - 1
         dd   0
 
 ; 选择子
@@ -48,6 +49,7 @@ SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
 SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
 SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
 SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
+SelectorSTK  equ  DESCRIPTOR_STACK  - LEABLE_GDT
 Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
 SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
 
@@ -57,11 +59,20 @@ ALIGN 32
 [BITS 32]
 LEABLE_DATA:
     spValueReal:   dw    0
-    HELLO_MSG:     db    'Hello, Operating System!!'
-    LenHELLO_MSG   equ   $ - HELLO_MSG
-    ProMod_MSG:    db    'Hello, Protected Mode!'
-    LenProMod_MSG  equ   $ - ProMod_MSG
+    HelloMSG:      db    "Hello, Operating System!"
+    LenHelloMSG    equ   $ - HelloMSG
+    ProModMSG:     db    "Hello, Protected Mode!", 0
+    OffsetModMSG   equ   ProModMSG - $$
+    StrTest:       db    "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
+    OfffsetStrT    equ   StrTest - $$
     DataLen        equ   $ - LEABLE_DATA
+
+[SECTION .gs]
+ALIGN 32
+[BITS 32]
+LEABLE_STACK:
+    times  512  db  0
+TopOfStack  equ  $ - LEABLE_STACK - 1
 
 [SECTION .s16]
 [BITS 16]
@@ -80,10 +91,10 @@ LEABLE_BEGIN:
     xor    di, di
     xor    ax, ax
 
-    mov    si, HELLO_MSG
-    mov    di, PrintStart(0, 0)
+    mov    si, HelloMSG
+    mov    di, DispStart(0, 0)
     mov    ah, 0Ah
-    mov    cx, LenHELLO_MSG
+    mov    cx, LenHelloMSG
     cld
     SHOW:
         lodsb
@@ -94,6 +105,7 @@ LEABLE_BEGIN:
     InitGDT LEABLE_CODE32, DESCRIPTOR_CODE32
     InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
     InitGDT LEABLE_DATA, DESCRIPTOR_DATA
+    InitGDT LEABLE_STACK, DESCRIPTOR_STACK
 
     xor    eax, eax
     mov    ax, ds
@@ -131,7 +143,7 @@ LEABLE_REAL_RETURN:
     xor    eax, eax
     mov    ax, 0B800h
     mov    gs, ax
-    mov    edi, PrintStart(3, 0)
+    mov    edi, DispStart(4, 0)
     mov    ah, 0Ah
     mov    al, 'R'
     mov    [gs:edi], ax
@@ -143,41 +155,117 @@ LEABLE_REAL_RETURN:
 [SECTION .s32]
 [BITS 32]
 LEABLE_CODE32:
-    mov    ax, SelectorVDO
-    mov    gs, ax
-    xor    edi, edi
-    xor    esi, esi
-    mov    edi, PrintStart(1, 0)
-    mov    ah, 0Ch
-    mov    ecx, LenProMod_MSG
-    mov    esi, ProMod_MSG
-
-    cld
-    SHOW2:
-        lodsb
-        mov    [gs:edi], ax
-        add    edi, 2
-    loop SHOW2
-
+    mov    ax, SelectorDAT
+    mov    ds, ax
     mov    ax, Selector5MB
     mov    es, ax
+    mov    ax, SelectorVDO
+    mov    gs, ax
+    mov    ax, SelectorSTK
+    mov    ss, ax
+    mov    esp, TopOfStack
 
-    mov    al, [es:0]
-    add    al, '0'
+    xor    edi, edi
+    mov    edi, DispStart(1, 0)
+
+    xor    esi, esi
+    mov    esi, OffsetModMSG
     mov    ah, 0Ch
-    mov    edi, PrintStart(2, 0)
-    mov    [gs:edi], ax
+    cld
+    SHOW2.1:
+        lodsb
+        test   al, al
+        jz     SHOW2.2
+        mov    [gs:edi], ax
+        add    edi, 2
+        jmp    SHOW2.1
+    SHOW2.2:
+
+    call   DispReturn
+    call   Read5MB
+
+    call   Write5MB
 
     mov    al, 7
-    mov    [es:0], al
+    mov    [es:4], al
 
-    mov    al, [es:0]
-    add    al, '0'
-    mov    ah, 0Ch
-    mov    edi, PrintStart(2, 2)
-    mov    [gs:edi], ax
+    call   Read5MB
 
     jmp    SelectorC16:0
+
+Read5MB:
+    push   esi
+    xor    esi, esi
+    mov    ecx, 8
+    .loop:
+        mov    al, [es:esi]
+        call   DispAL
+        inc    esi
+        loop   .loop
+    call   DispReturn
+    pop   esi
+    ret
+
+Write5MB:
+    push   esi
+    push   edi
+    xor    esi, esi
+    xor    edi, edi
+    mov    esi, OfffsetStrT
+    cld
+    .1:
+        lodsb
+        test   al, al
+        jz     .2
+        mov    [es:edi], al
+        inc    edi
+        jmp    .1
+        .2:
+    pop   edi
+    pop   esi
+    ret
+
+DispAL:
+    push   ecx
+    push   edx
+    mov    ah, 0Ch
+    mov    dl, al
+    shr    al, 4
+    mov    ecx, 2
+    .begin:
+        and    al, 0Fh
+        cmp    al, 9
+        ja     .1
+        add    al, '0'
+        jmp    .2
+    .1:
+        sub    al, 0Ah
+        add    al, 'A'
+    .2:
+        mov    [gs:edi], ax
+        add    edi, 2
+
+        mov    al, dl
+        loop   .begin
+    add    edi, 2
+    pop    edx
+    pop    ecx
+    ret
+
+DispReturn:
+    push   eax
+    push   ebx
+    mov    eax, edi
+    mov    bl, 160
+    div    bl
+    and    eax, 0FFh
+    inc    eax
+    mov    bl, 160
+    mul    bl
+    mov    edi, eax
+    pop    ebx
+    pop    eax
+    ret
 
 Code32Len  equ  $ - LEABLE_CODE32
 
