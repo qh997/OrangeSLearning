@@ -14,6 +14,13 @@
     db  (%1 >> 24) & 0FFh
 %endmacro
 
+%macro Gate 4
+    dw  (%2 & 0FFFFh)
+    dw  %1
+    dw  (%3 & 1Fh) | ((%4 << 8) & 0FF00h)
+    dw  ((%2 >> 16) & 0FFFFh)
+%endmacro
+
 ; 初始化 GDT
 %macro InitGDT 2
     xor    eax, eax
@@ -26,20 +33,51 @@
     mov    byte [%2 + 7], ah
 %endmacro
 
+                        ; GD        P  S type
+                        ; 0000 ---- 0000 0000
+DA_32        EQU  4000h ; 0100
+DA_DPL0      EQU    00h ;           0000
+DA_DPL1      EQU    20h ;           0010
+DA_DPL2      EQU    40h ;           0100
+DA_DPL3      EQU    60h ;           0110
+DA_DR        EQU    90h ;           1001 0000
+DA_DRW       EQU    92h ;           1001 0010
+DA_DRWA      EQU    93h ;           1001 0011
+DA_C         EQU    98h ;           1001 1000
+DA_CR        EQU    9Ah ;           1001 1010
+DA_CCO       EQU    9Ch ;           1001 1100
+DA_CCOR      EQU    9Eh ;           1001 1110
+DA_LDT       EQU    82h ;           1000 0010
+DA_TaskGate  EQU    85h ;           1000 0101
+DA_386TSS    EQU    89h ;           1000 1001
+DA_386CGate  EQU    8Ch ;           1000 1100
+DA_386IGate  EQU    8Eh ;           1000 1110
+DA_386TGate  EQU    8Fh ;           1000 1111
+
+                 ; -...- TI RPL
+                 ; 15..3  2 10
+SA_RPL0   EQU  0 ;          00
+SA_RPL1   EQU  1 ;          01
+SA_RPL2   EQU  2 ;          10
+SA_RPL3   EQU  3 ;          11
+
 org 0100h
 jmp LEABLE_BEGIN
 
 ; GDT
 [SECTION .gdt]
-    LEABLE_GDT:        Descriptor        0,             0,     0
-    DESCRIPTOR_NORMAL: Descriptor        0,        0ffffh, 0092h
-    DESCRIPTOR_CODE32: Descriptor        0, Code32Len - 1, 4098h
-    DESCRIPTOR_CODE16: Descriptor        0,        0ffffh, 0098h
-    DESCRIPTOR_DATA:   Descriptor        0,   DataLen - 1, 0092h
-    DESCRIPTOR_STACK:  Descriptor        0,    TopOfStack, 4093h
-    DESCRIPTOR_5MB:    Descriptor 0500000h,        0ffffh, 0092h
-    DESCRIPTOR_LDT:    Descriptor        0,    LdtLen - 1, 0082h
-    DESCRIPTOR_VEDIO:  Descriptor  0B8000h,        0FFFFh, 0092h
+    LEABLE_GDT:          Descriptor            0,             0, 0
+    DESCRIPTOR_NORMAL:   Descriptor            0,        0ffffh, DA_DRW
+    DESCRIPTOR_CODE32:   Descriptor            0, Code32Len - 1, DA_32 + DA_C
+    DESCRIPTOR_CODE16:   Descriptor            0,        0ffffh, DA_C
+    DESCRIPTOR_DATA:     Descriptor            0,   DataLen - 1, DA_DRW
+    DESCRIPTOR_STACK:    Descriptor            0,    TopOfStack, DA_32 + DA_DRWA
+    DESCRIPTOR_5MB:      Descriptor     0500000h,        0ffffh, DA_DRW
+    DESCRIPTOR_LDT:      Descriptor            0,    LdtLen - 1, DA_LDT
+    DESCRIPTOR_DEST:     Descriptor            0, CodeDtLen - 1, DA_32 + DA_C
+    DESCRIPTOR_VEDIO:    Descriptor      0B8000h,        0FFFFh, DA_DRW
+
+    DESC_GATE_TEST:      Gate        SelectorCdt,          0, 0, DA_DPL0 + DA_386CGate
 
     GdtLen  equ  $ - LEABLE_GDT
     GdtPtr: dw   GdtLen - 1
@@ -53,7 +91,10 @@ jmp LEABLE_BEGIN
     SelectorSTK  equ  DESCRIPTOR_STACK  - LEABLE_GDT
     Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
     SelectorLDT  equ  DESCRIPTOR_LDT    - LEABLE_GDT
+    SelectorCdt  equ  DESCRIPTOR_DEST   - LEABLE_GDT
     SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+
+    SelectorGTT  equ  DESC_GATE_TEST    - LEABLE_GDT
 
 ; 数据
 [SECTION .data1]
@@ -75,7 +116,7 @@ ALIGN 32
 [BITS 32]
 LEABLE_STACK:
     times  512  db  0
-TopOfStack  equ  $ - LEABLE_STACK - 1
+    TopOfStack  equ  $ - LEABLE_STACK - 1
 
 [SECTION .s16]
 [BITS 16]
@@ -110,6 +151,7 @@ LEABLE_BEGIN:
     InitGDT LEABLE_DATA, DESCRIPTOR_DATA
     InitGDT LEABLE_STACK, DESCRIPTOR_STACK
     InitGDT LEABLE_LDT, DESCRIPTOR_LDT
+    InitGDT LEABLE_CODE_DEST, DESCRIPTOR_DEST
     InitGDT LEABLE_CODE_A, DESCRIPTOR_LDT_CODEA
 
     xor    eax, eax
@@ -188,94 +230,93 @@ LEABLE_CODE32:
 
     call   DispReturn
     call   Read5MB
-
     call   Write5MB
-
     mov    al, 7
     mov    [es:4], al
-
     call   Read5MB
+
+    call   SelectorGTT:0
 
     mov    ax, SelectorLDT
     lldt   ax
 
     jmp    SelectorLDTCodeA:0
 
-Read5MB:
-    push   esi
-    xor    esi, esi
-    mov    ecx, 8
-    .loop:
-        mov    al, [es:esi]
-        call   DispAL
-        inc    esi
-        loop   .loop
-    call   DispReturn
-    pop   esi
-    ret
+    Read5MB:
+        push   esi
+        xor    esi, esi
+        mov    ecx, 8
+        .loop:
+            mov    al, [es:esi]
+            call   DispAL
+            inc    esi
+            loop   .loop
+        call   DispReturn
+        pop   esi
+        ret
 
-Write5MB:
-    push   esi
-    push   edi
-    xor    esi, esi
-    xor    edi, edi
-    mov    esi, OfffsetStrT
-    cld
-    .1:
-        lodsb
-        test   al, al
-        jz     .2
-        mov    [es:edi], al
-        inc    edi
-        jmp    .1
+    Write5MB:
+        push   esi
+        push   edi
+        xor    esi, esi
+        xor    edi, edi
+        mov    esi, OfffsetStrT
+        cld
+        .1:
+            lodsb
+            test   al, al
+            jz     .2
+            mov    [es:edi], al
+            inc    edi
+            jmp    .1
+            .2:
+        pop   edi
+        pop   esi
+        ret
+
+    DispAL:
+        push   ecx
+        push   edx
+        mov    ah, 0Ch
+        mov    dl, al
+        shr    al, 4
+        mov    ecx, 2
+        .begin:
+            and    al, 0Fh
+            cmp    al, 9
+            ja     .1
+            add    al, '0'
+            jmp    .2
+        .1:
+            sub    al, 0Ah
+            add    al, 'A'
         .2:
-    pop   edi
-    pop   esi
-    ret
+            mov    [gs:edi], ax
+            add    edi, 2
 
-DispAL:
-    push   ecx
-    push   edx
-    mov    ah, 0Ch
-    mov    dl, al
-    shr    al, 4
-    mov    ecx, 2
-    .begin:
-        and    al, 0Fh
-        cmp    al, 9
-        ja     .1
-        add    al, '0'
-        jmp    .2
-    .1:
-        sub    al, 0Ah
-        add    al, 'A'
-    .2:
-        mov    [gs:edi], ax
+            mov    al, dl
+            loop   .begin
         add    edi, 2
+        pop    edx
+        pop    ecx
+        ret
 
-        mov    al, dl
-        loop   .begin
-    add    edi, 2
-    pop    edx
-    pop    ecx
-    ret
+    DispReturn:
+        push   eax
+        push   ebx
+        mov    eax, edi
+        mov    bl, 160
+        div    bl
+        and    eax, 0FFh
+        inc    eax
+        mov    bl, 160
+        mul    bl
+        mov    edi, eax
+        pop    ebx
+        pop    eax
+        ret
 
-DispReturn:
-    push   eax
-    push   ebx
-    mov    eax, edi
-    mov    bl, 160
-    div    bl
-    and    eax, 0FFh
-    inc    eax
-    mov    bl, 160
-    mul    bl
-    mov    edi, eax
-    pop    ebx
-    pop    eax
-    ret
-
-Code32Len  equ  $ - LEABLE_CODE32
+    Code32Len  equ  $ - LEABLE_CODE32
 
 [SECTION .s16code]
 ALIGN 32
@@ -312,11 +353,26 @@ LEABLE_CODE_A:
     mov    ax, SelectorVDO
     mov    gs, ax
 
-    mov    edi, DispStart(4, 0)
+    mov    edi, DispStart(4, 3)
     mov    ah, 0Ch
     mov    al, 'L'
     mov    [gs:edi], ax
 
     jmp    SelectorC16:0
 
-CodeALen  equ  $ - LEABLE_CODE_A
+    CodeALen  equ  $ - LEABLE_CODE_A
+
+[SECTION .sdest]
+[BITS 32]
+LEABLE_CODE_DEST:
+    mov    ax, SelectorVDO
+    mov    gs, ax
+
+    mov    edi, DispStart(4, 0)
+    mov    ah, 0Ch
+    mov    al, 'G'
+    mov    [gs:edi], ax
+
+    retf
+
+    CodeDtLen  equ  $ - LEABLE_CODE_DEST
