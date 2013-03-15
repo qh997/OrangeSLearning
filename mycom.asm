@@ -36,6 +36,7 @@
                         ; GD        P  S type
                         ; 0000 ---- 0000 0000
 DA_32        EQU  4000h ; 0100
+DA_4K        EQU  8000h ; 1000
 DA_DPL0      EQU    00h ;           0000
 DA_DPL1      EQU    20h ;           0010
 DA_DPL2      EQU    40h ;           0100
@@ -61,6 +62,14 @@ SA_RPL1   EQU  1 ;          01
 SA_RPL2   EQU  2 ;          10
 SA_RPL3   EQU  3 ;          11
 
+PG_P      EQU  1 ; 页存在属性位
+PG_RWR    EQU  0 ; R/W 属性位值, 读/执行
+PG_RWW    EQU  2 ; R/W 属性位值, 读/写/执行
+PG_USS    EQU  0 ; U/S 属性位值, 系统级
+PG_USU    EQU  4 ; U/S 属性位值, 用户级
+
+PageDirBase  equ  200000h
+PageTblBase  equ  201000h
 
 org 0100h
 jmp LEABLE_BEGIN
@@ -69,6 +78,8 @@ jmp LEABLE_BEGIN
 [SECTION .gdt]
     LEABLE_GDT:          Descriptor            0,             0, 0
     DESCRIPTOR_NORMAL:   Descriptor            0,        0ffffh,         DA_DRW
+    DESCRIPTOR_PAGE_D:   Descriptor  PageDirBase,          4095,         DA_DRW
+    DESCRIPTOR_PAGE_T:   Descriptor  PageTblBase,          1023, DA_4K + DA_DRW
     DESCRIPTOR_CODE32:   Descriptor            0, Code32Len - 1, DA_32 + DA_C
     DESCRIPTOR_CODE16:   Descriptor            0,        0ffffh,         DA_C
     DESCRIPTOR_DEST:     Descriptor            0, CodeDtLen - 1, DA_32 + DA_C
@@ -88,6 +99,8 @@ jmp LEABLE_BEGIN
 
     ; 选择子
     SelectorNML  equ  DESCRIPTOR_NORMAL  - LEABLE_GDT
+    SelectorPGD  equ  DESCRIPTOR_PAGE_D  - LEABLE_GDT
+    SelectorPGT  equ  DESCRIPTOR_PAGE_T  - LEABLE_GDT
     SelectorC32  equ  DESCRIPTOR_CODE32  - LEABLE_GDT
     SelectorC16  equ  DESCRIPTOR_CODE16  - LEABLE_GDT
     SelectorCdt  equ  DESCRIPTOR_DEST    - LEABLE_GDT
@@ -253,6 +266,8 @@ LEABLE_REAL_RETURN:
 [SECTION .s32]
 [BITS 32]
 LEABLE_CODE32:
+    call   SetupPaging
+
     mov    ax, SelectorDAT
     mov    ds, ax
     mov    ax, Selector5MB
@@ -301,6 +316,39 @@ LEABLE_CODE32:
     lldt   ax
 
     jmp    SelectorLDTCodeA:0
+
+    SetupPaging:
+        mov    ax, SelectorPGD
+        mov    es, ax
+        mov    ecx, 1024
+        xor    edi, edi
+        xor    eax, eax
+        mov    eax, PageTblBase | PG_P  | PG_USU | PG_RWW
+        .1:
+            stosd
+            add    eax, 4096
+            loop   .1
+
+        mov    ax, SelectorPGT
+        mov    es, ax
+        mov    ecx, 1024 * 1024
+        xor    edi, edi
+        xor    eax, eax
+        mov    eax, PG_P | PG_USU | PG_RWW
+        .2:
+            stosd
+            add    eax, 4096
+            loop   .2
+
+        mov    eax, PageDirBase
+        mov    cr3, eax
+        mov    eax, cr0
+        or     eax, 80000000h
+        mov    cr0, eax
+        jmp    short .3
+        .3:
+            nop
+        ret
 
     Read5MB:
         push   esi
@@ -390,11 +438,11 @@ LEABLE_CODE16:
     mov    ss, ax
 
     mov    eax, cr0
-    and    al, 11111110b
+    and    eax, 7FFFFFFEh
     mov    cr0, eax
 
-LEABLE_BACK_REAL:
-    jmp    0:LEABLE_REAL_RETURN
+    LEABLE_BACK_REAL:
+        jmp    0:LEABLE_REAL_RETURN
 
 [SECTION .ldt]
 ALIGN 32
@@ -438,8 +486,6 @@ LEABLE_CODE_DEST:
 
     jmp    SelectorLDTCodeA:0
 
-    retf
-
     CodeDtLen  equ  $ - LEABLE_CODE_DEST
 
 [SECTION .cr3]
@@ -454,7 +500,5 @@ LEABLE_CODE_R3:
     mov    [gs:edi], ax
 
     call   SelectorGTT:0
-
-    jmp    $
 
     CodeR3Len  equ  $ - LEABLE_CODE_R3
