@@ -61,40 +61,46 @@ SA_RPL1   EQU  1 ;          01
 SA_RPL2   EQU  2 ;          10
 SA_RPL3   EQU  3 ;          11
 
+
 org 0100h
 jmp LEABLE_BEGIN
 
 ; GDT
 [SECTION .gdt]
     LEABLE_GDT:          Descriptor            0,             0, 0
-    DESCRIPTOR_NORMAL:   Descriptor            0,        0ffffh, DA_DRW
+    DESCRIPTOR_NORMAL:   Descriptor            0,        0ffffh,         DA_DRW
     DESCRIPTOR_CODE32:   Descriptor            0, Code32Len - 1, DA_32 + DA_C
-    DESCRIPTOR_CODE16:   Descriptor            0,        0ffffh, DA_C
-    DESCRIPTOR_DATA:     Descriptor            0,   DataLen - 1, DA_DRW
-    DESCRIPTOR_STACK:    Descriptor            0,    TopOfStack, DA_32 + DA_DRWA
-    DESCRIPTOR_5MB:      Descriptor     0500000h,        0ffffh, DA_DRW
-    DESCRIPTOR_LDT:      Descriptor            0,    LdtLen - 1, DA_LDT
+    DESCRIPTOR_CODE16:   Descriptor            0,        0ffffh,         DA_C
     DESCRIPTOR_DEST:     Descriptor            0, CodeDtLen - 1, DA_32 + DA_C
-    DESCRIPTOR_VEDIO:    Descriptor      0B8000h,        0FFFFh, DA_DRW
-
-    DESC_GATE_TEST:      Gate        SelectorCdt,          0, 0, DA_DPL0 + DA_386CGate
+    DESCRIPTOR_CODE_R3:  Descriptor            0, CodeR3Len - 1, DA_32 + DA_C        + DA_DPL3
+    DESCRIPTOR_DATA:     Descriptor            0,   DataLen - 1,         DA_DRW
+    DESCRIPTOR_STACK:    Descriptor            0,    TopOfStack, DA_32 + DA_DRWA
+    DESCRIPTOR_STACK3:   Descriptor            0,   TopOfStack3, DA_32 + DA_DRWA     + DA_DPL3
+    DESCRIPTOR_5MB:      Descriptor     0500000h,        0ffffh,         DA_DRW
+    DESCRIPTOR_LDT:      Descriptor            0,    LdtLen - 1,         DA_LDT
+    DESCRIPTOR_VEDIO:    Descriptor      0B8000h,        0FFFFh,         DA_DRW      + DA_DPL3
+    DESCRIPTOR_TSS:      Descriptor            0,    TssLen - 1,         DA_386TSS
+    DESC_GATE_TEST:      Gate        SelectorCdt,       0,    0,         DA_386CGate + DA_DPL3
 
     GdtLen  equ  $ - LEABLE_GDT
     GdtPtr: dw   GdtLen - 1
             dd   0
 
     ; 选择子
-    SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
-    SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
-    SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
-    SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
-    SelectorSTK  equ  DESCRIPTOR_STACK  - LEABLE_GDT
-    Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
-    SelectorLDT  equ  DESCRIPTOR_LDT    - LEABLE_GDT
-    SelectorCdt  equ  DESCRIPTOR_DEST   - LEABLE_GDT
-    SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+    SelectorNML  equ  DESCRIPTOR_NORMAL  - LEABLE_GDT
+    SelectorC32  equ  DESCRIPTOR_CODE32  - LEABLE_GDT
+    SelectorC16  equ  DESCRIPTOR_CODE16  - LEABLE_GDT
+    SelectorCdt  equ  DESCRIPTOR_DEST    - LEABLE_GDT
+    SelectorCR3  equ  DESCRIPTOR_CODE_R3 - LEABLE_GDT + SA_RPL3
+    SelectorDAT  equ  DESCRIPTOR_DATA    - LEABLE_GDT
+    SelectorSTK  equ  DESCRIPTOR_STACK   - LEABLE_GDT
+    SelectorSK3  equ  DESCRIPTOR_STACK3  - LEABLE_GDT + SA_RPL3
+    Selector5MB  equ  DESCRIPTOR_5MB     - LEABLE_GDT
+    SelectorLDT  equ  DESCRIPTOR_LDT     - LEABLE_GDT
+    SelectorTSS  equ  DESCRIPTOR_TSS     - LEABLE_GDT
+    SelectorVDO  equ  DESCRIPTOR_VEDIO   - LEABLE_GDT
 
-    SelectorGTT  equ  DESC_GATE_TEST    - LEABLE_GDT
+    SelectorGTT  equ  DESC_GATE_TEST     - LEABLE_GDT + SA_RPL3
 
 ; 数据
 [SECTION .data1]
@@ -117,6 +123,48 @@ ALIGN 32
 LEABLE_STACK:
     times  512  db  0
     TopOfStack  equ  $ - LEABLE_STACK - 1
+
+[SECTION .gs3]
+ALIGN 32
+[BITS 32]
+LEABLE_STACK3:
+    times  512  db  0
+    TopOfStack3 equ  $ - LEABLE_STACK3 - 1
+
+[SECTION .tss]
+ALIGN 32
+[BITS 32]
+LEABLE_TSS:
+    DD    0                  ; Back
+    DD    TopOfStack         ; 0 级堆栈
+    DD    SelectorSTK        ;
+    DD    0                  ; 1 级堆栈
+    DD    0                  ; 
+    DD    0                  ; 2 级堆栈
+    DD    0                  ; 
+    DD    0                  ; CR3
+    DD    0                  ; EIP
+    DD    0                  ; EFLAGS
+    DD    0                  ; EAX
+    DD    0                  ; ECX
+    DD    0                  ; EDX
+    DD    0                  ; EBX
+    DD    0                  ; ESP
+    DD    0                  ; EBP
+    DD    0                  ; ESI
+    DD    0                  ; EDI
+    DD    0                  ; ES
+    DD    0                  ; CS
+    DD    0                  ; SS
+    DD    0                  ; DS
+    DD    0                  ; FS
+    DD    0                  ; GS
+    DD    0                  ; LDT
+    DW    0                  ; 调试陷阱标志
+    DW    $ - LEABLE_TSS + 2 ; I/O位图基址
+    DB    0ffh               ; I/O位图结束标志
+    
+    TssLen  equ  $ - LEABLE_TSS
 
 [SECTION .s16]
 [BITS 16]
@@ -146,13 +194,16 @@ LEABLE_BEGIN:
         add   di, 2
     loop   SHOW
 
-    InitGDT LEABLE_CODE32, DESCRIPTOR_CODE32
-    InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
-    InitGDT LEABLE_DATA, DESCRIPTOR_DATA
-    InitGDT LEABLE_STACK, DESCRIPTOR_STACK
-    InitGDT LEABLE_LDT, DESCRIPTOR_LDT
+    InitGDT LEABLE_CODE32,    DESCRIPTOR_CODE32
+    InitGDT LEABLE_CODE16,    DESCRIPTOR_CODE16
     InitGDT LEABLE_CODE_DEST, DESCRIPTOR_DEST
-    InitGDT LEABLE_CODE_A, DESCRIPTOR_LDT_CODEA
+    InitGDT LEABLE_CODE_R3,   DESCRIPTOR_CODE_R3
+    InitGDT LEABLE_DATA,      DESCRIPTOR_DATA
+    InitGDT LEABLE_STACK,     DESCRIPTOR_STACK
+    InitGDT LEABLE_STACK3,    DESCRIPTOR_STACK3
+    InitGDT LEABLE_LDT,       DESCRIPTOR_LDT
+    InitGDT LEABLE_CODE_A,    DESCRIPTOR_LDT_CODEA
+    InitGDT LEABLE_TSS,       DESCRIPTOR_TSS
 
     xor    eax, eax
     mov    ax, ds
@@ -190,7 +241,7 @@ LEABLE_REAL_RETURN:
     xor    eax, eax
     mov    ax, 0B800h
     mov    gs, ax
-    mov    edi, DispStart(4, 15)
+    mov    edi, DispStart(5, 0)
     mov    ah, 0Ah
     mov    al, 'R'
     mov    [gs:edi], ax
@@ -234,6 +285,15 @@ LEABLE_CODE32:
     mov    al, 7
     mov    [es:4], al
     call   Read5MB
+
+    mov    ax, SelectorTSS
+    ltr    ax
+
+    push   SelectorSK3
+    push   TopOfStack3
+    push   SelectorCR3
+    push   0
+    retf
 
     call   SelectorGTT:0
 
@@ -353,7 +413,7 @@ LEABLE_CODE_A:
     mov    ax, SelectorVDO
     mov    gs, ax
 
-    mov    edi, DispStart(4, 3)
+    mov    edi, DispStart(4, 7)
     mov    ah, 0Ch
     mov    al, 'L'
     mov    [gs:edi], ax
@@ -368,11 +428,33 @@ LEABLE_CODE_DEST:
     mov    ax, SelectorVDO
     mov    gs, ax
 
-    mov    edi, DispStart(4, 0)
+    mov    edi, DispStart(4, 5)
     mov    ah, 0Ch
     mov    al, 'G'
     mov    [gs:edi], ax
 
+    mov    ax, SelectorLDT
+    lldt   ax
+
+    jmp    SelectorLDTCodeA:0
+
     retf
 
     CodeDtLen  equ  $ - LEABLE_CODE_DEST
+
+[SECTION .cr3]
+[BITS 32]
+LEABLE_CODE_R3:
+    mov    ax, SelectorVDO
+    mov    gs, ax
+
+    mov    edi, DispStart(4, 3)
+    mov    ah, 0Ch
+    mov    al, '3'
+    mov    [gs:edi], ax
+
+    call   SelectorGTT:0
+
+    jmp    $
+
+    CodeR3Len  equ  $ - LEABLE_CODE_R3
