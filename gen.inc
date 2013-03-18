@@ -75,13 +75,18 @@ PG_USU    EQU  4 ; U/S 属性位值, 用户级
     mov    [gs:edi], ax
 %endmacro
 
-%macro PrintString 5
-    mov    ax, %1
+%macro PrintString 2
+    push   eax
+    push   edx
+    push   esi
+
+    xor    eax, eax
+    mov    ax, SelectorVedio
     mov    gs, ax
 
-    mov    esi, %5
-    mov    edi, DispStart(%2, %3)
-    mov    ah, %4
+    mov    esi, %2
+    mov    edi, [dwDispPos]
+    mov    ah, %1
     cld
     .1:
         lodsb
@@ -91,4 +96,8 @@ PG_USU    EQU  4 ; U/S 属性位值, 用户级
         add    edi, 2
         jmp    .1
     .2:
+
+    pop    esi
+    pop    edx
+    pop    eax
 %endmacro

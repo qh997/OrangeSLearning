@@ -55,21 +55,46 @@ jmp LEABLE_BEGIN
 ALIGN 32
 [BITS 32]
 LEABLE_DATA1:
-    spValueReal:   dw    0
-    HelloMSG:      db    "Hello, Operating System!", 0
-    LenHelloMSG    equ   $ - HelloMSG
+    _dwRealsp:       dd     0
+    _dwDispPos:      dd     DispStart(0, 0)
 
-    _szHello:        db  "Hello, Operating System!", 0
-    _szProMod:       db  "Hello, Protected Mode!", 0
-    _szLetter:       db  "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
-    _szMemChkTitle:  db  "BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0
-    _szRAMSize:      db  "RAM size:", 0
-    _szReturn:       db  0Ah, 0
+    _szHello:        db     "Hello, Operating System!", 0
+    _szProMod:       db     "Hello, Protected Mode!", 0Ah, 0
+    _szLetter:       db     "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
+    _szMemChkIdx:    db     "BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0
+    _szRAMSize:      db     "RAM size:", 0
+    _szSpace:        db     " ", 0
+    _szReturn:       db     0Ah, 0
 
-    szProMod   equ   _szProMod - $$
-    szLetter    equ   _szLetter - $$
+    _dwMCRNumber:    dd     0
+    _dwMemSize:      dd     0
+    _ARDStruct:
+        _dwBaseAddrLow:     dd    0
+        _dwBaseAddrHigh:    dd    0
+        _dwLengthLow:       dd    0
+        _dwLengthHigh:      dd    0
+        _dwType:            dd    0
+    _MemChkBuf:      times  256  db  0
 
-    LenData1       equ   $ - LEABLE_DATA1
+    dwDispPos        equ    _dwDispPos - $$
+    szProMod         equ    _szProMod - $$
+    szLetter         equ    _szLetter - $$
+    szMemChkIdx      equ    _szMemChkIdx - $$
+    szRAMSize        equ    _szRAMSize - $$
+    szSpace          equ    _szSpace - $$
+    szReturn         equ    _szReturn - $$
+
+    dwMCRNumber      equ    _dwMCRNumber - $$
+    dwMemSize        equ    _dwMemSize - $$
+    ARDStruct:       equ    _ARDStruct
+        dwBaseAddrLow:      dd    _dwBaseAddrLow - $$
+        dwBaseAddrHigh:     dd    _dwBaseAddrHigh - $$
+        dwLengthLow:        dd    _dwLengthLow - $$
+        dwLengthHigh:       dd    _dwLengthHigh - $$
+        dwType:             dd    _dwType - $$
+    MemChkBuf        equ    _MemChkBuf - $$
+
+    LenData1  equ  $ - LEABLE_DATA1
 
 ; 堆栈
 [SECTION .gs]
@@ -130,9 +155,40 @@ LEABLE_BEGIN:
     mov    ss, ax
     mov    sp, 0100h
     mov    [LEABLE_BACK_REAL + 3], ax
-    mov    [spValueReal], sp
+    mov    [_dwRealsp], sp
 
-    PrintString 0B800h, 0, 0, 0Ah, _szHello
+    mov    ax, 0B800h
+    mov    gs, ax
+    mov    esi, _szHello
+    mov    edi, [_dwDispPos]
+    mov    ah, 0Ah
+    cld
+    .1:
+        lodsb
+        test   al, al
+        jz     .2
+        mov    [gs:edi], ax
+        add    edi, 2
+        jmp    .1
+    .2:
+    mov    [_dwDispPos], edi
+
+    mov    ebx, 0
+    mov    di, _MemChkBuf
+    .mcloop:
+        mov    eax, 0E820h
+        mov    ecx, 20
+        mov    edx, 0534D4150h
+        int    15h
+        jc     .mcfail
+        add    di, 20
+        inc    dword [_dwMCRNumber]
+        cmp    ebx, 0
+        jne    .mcloop
+        jmp    .mcok
+    .mcfail:
+        mov    dword [_dwMCRNumber], 0
+    .mcok:
 
     InitGDT LEABLE_CODE32,    DESC_C_32
     InitGDT LEABLE_CODE16,    DESC_C_16
@@ -170,7 +226,7 @@ LEABLE_REAL_RETURN:
     mov    es, ax
     mov    ss, ax
 
-    mov    sp, [spValueReal]
+    mov    sp, [_dwRealsp]
 
     in     al, 92h
     and    al, 11111101b
@@ -197,7 +253,7 @@ LEABLE_CODE32:
 
     mov    ax, SelectorData1
     mov    ds, ax
-    mov    ax, Selector5MB
+    mov    ax, SelectorData1
     mov    es, ax
     mov    ax, SelectorVedio
     mov    gs, ax
@@ -205,9 +261,14 @@ LEABLE_CODE32:
     mov    ss, ax
     mov    esp, TopStack
 
-    PrintString SelectorVedio, 1, 0, 0Ch, szProMod
-
     call   DispReturn
+
+    push   szProMod
+    call   DispStr
+    add    esp, 4
+
+    mov    ax, Selector5MB
+    mov    es, ax
     call   Read5MB
     call   Write5MB
     mov    al, 7
@@ -229,6 +290,51 @@ LEABLE_CODE32:
     lldt   ax
 
     jmp    SelectorLCodeA:0
+
+    DispMemInfo:
+        push   esi
+        push   edi
+        push   ecx
+
+        mov    esi, MemChkBuf
+        mov    ecx, [dwMCRNumber]
+        .loop:
+            mov    edx, 5
+            mov    edi, ARDStruct
+            .1:
+                push   dword [esi]
+                call   DispInt
+                call   DispSpace
+                pop    eax
+                stosd
+                add    esi, 4
+                dec    edx
+                cmp    edx, 0
+                jnz    .1
+                call   DispReturn
+                cmp    dword [dwType], 1
+                jne    .2
+                mov    eax, [dwBaseAddrLow]
+                add    eax, [dwLengthLow]
+                cmp    eax, [dwMemSize]
+                jb     .2
+                mov    [dwMemSize], eax
+            .2:
+                loop    .loop
+
+        call   DispReturn
+        push   szRAMSize
+        call   DispStr
+        add    esp, 4
+
+        push   dword [dwMemSize]
+        call   DispInt
+        add    esp, 4
+
+        pop    ecx
+        pop    edi
+        pop    esi
+        ret
 
     SetupPaging:
         mov    ax, SelectorPageDir
@@ -270,6 +376,7 @@ LEABLE_CODE32:
         .loop:
             mov    al, [es:esi]
             call   DispAL
+            call   DispSpace
             inc    esi
             loop   .loop
         call   DispReturn
