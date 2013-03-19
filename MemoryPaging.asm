@@ -205,8 +205,7 @@ LEABLE_CODE32:
     add    esp, 4
 
     call   DispMemInfo
-
-    ;call   SetupPaging
+    call   SetupPaging
 
     call   DispReturn
     jmp    SelectorCode16:0
@@ -257,20 +256,32 @@ LEABLE_CODE32:
         ret
 
     SetupPaging:
+        xor    edx, edx
+        mov    eax, [dwMemSize]
+        mov    ebx, 400000h
+        div    ebx
+        mov    ecx, eax
+        test   edx, edx
+        jz     .no_remainder
+        inc    ecx
+
+        .no_remainder:
+        push   ecx
         mov    ax, SelectorPageDir
         mov    es, ax
-        mov    ecx, 1024
         xor    edi, edi
         xor    eax, eax
-        mov    eax, PageTblBase | PG_P  | PG_USU | PG_RWW
+        mov    eax, PageTblBase | PG_P | PG_USU | PG_RWW
         .1:
             stosd
             add    eax, 4096
             loop   .1
-
         mov    ax, SelectorPageTbl
         mov    es, ax
-        mov    ecx, 1024 * 1024
+        pop    eax
+        mov    ebx, 1024
+        mul    ebx
+        mov    ecx, eax
         xor    edi, edi
         xor    eax, eax
         mov    eax, PG_P | PG_USU | PG_RWW
@@ -285,8 +296,9 @@ LEABLE_CODE32:
         or     eax, 80000000h
         mov    cr0, eax
         jmp    short .3
+
         .3:
-            nop
+        nop
         ret
 
     %include    "MemoryPaging_lib.inc"
