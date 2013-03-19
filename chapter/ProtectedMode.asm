@@ -1,10 +1,7 @@
-; 编译方法：nasm -o mycom.com mycom.asm
+; 编译方法：nasm -o execute.com ProtectedMode.asm
 ; 复制文件：./copy_com.sh
 
-%include    "gen.inc"
-
-PageDirBase  equ  200000h
-PageTblBase  equ  201000h
+%include    "ProtectedMode_gen.inc"
 
 org 0100h
 jmp LEABLE_BEGIN
@@ -13,8 +10,6 @@ jmp LEABLE_BEGIN
 [SECTION .gdt]
     LEABLE_GDT:      Descriptor            0,                0,   0
     DESC_D_NORMAL:   Descriptor            0,           0ffffh,           DA_DRW
-    DESC_D_PDIR:     Descriptor  PageDirBase,             4095,           DA_DRW
-    DESC_D_PTBL:     Descriptor  PageTblBase,             1023,   DA_4K + DA_DRW
     DESC_C_32:       Descriptor            0,    LenCode32 - 1,   DA_32 + DA_C
     DESC_C_16:       Descriptor            0,           0ffffh,           DA_C
     DESC_C_DEST:     Descriptor            0,    LenCodeDt - 1,   DA_32 + DA_C
@@ -34,8 +29,6 @@ jmp LEABLE_BEGIN
 
     ; 选择子
     SelectorNormal    equ  DESC_D_NORMAL  - LEABLE_GDT
-    SelectorPageDir   equ  DESC_D_PDIR    - LEABLE_GDT
-    SelectorPageTbl   equ  DESC_D_PTBL    - LEABLE_GDT
     SelectorCode32    equ  DESC_C_32      - LEABLE_GDT
     SelectorCode16    equ  DESC_C_16      - LEABLE_GDT
     SelectorCodeDst   equ  DESC_C_DEST    - LEABLE_GDT
@@ -249,8 +242,6 @@ LEABLE_REAL_RETURN:
 [SECTION .s32]
 [BITS 32]
 LEABLE_CODE32:
-    call   SetupPaging
-
     mov    ax, SelectorData1
     mov    ds, ax
     mov    ax, SelectorData1
@@ -291,84 +282,6 @@ LEABLE_CODE32:
 
     jmp    SelectorLCodeA:0
 
-    DispMemInfo:
-        push   esi
-        push   edi
-        push   ecx
-
-        mov    esi, MemChkBuf
-        mov    ecx, [dwMCRNumber]
-        .loop:
-            mov    edx, 5
-            mov    edi, ARDStruct
-            .1:
-                push   dword [esi]
-                call   DispInt
-                call   DispSpace
-                pop    eax
-                stosd
-                add    esi, 4
-                dec    edx
-                cmp    edx, 0
-                jnz    .1
-                call   DispReturn
-                cmp    dword [dwType], 1
-                jne    .2
-                mov    eax, [dwBaseAddrLow]
-                add    eax, [dwLengthLow]
-                cmp    eax, [dwMemSize]
-                jb     .2
-                mov    [dwMemSize], eax
-            .2:
-                loop    .loop
-
-        call   DispReturn
-        push   szRAMSize
-        call   DispStr
-        add    esp, 4
-
-        push   dword [dwMemSize]
-        call   DispInt
-        add    esp, 4
-
-        pop    ecx
-        pop    edi
-        pop    esi
-        ret
-
-    SetupPaging:
-        mov    ax, SelectorPageDir
-        mov    es, ax
-        mov    ecx, 1024
-        xor    edi, edi
-        xor    eax, eax
-        mov    eax, PageTblBase | PG_P  | PG_USU | PG_RWW
-        .1:
-            stosd
-            add    eax, 4096
-            loop   .1
-
-        mov    ax, SelectorPageTbl
-        mov    es, ax
-        mov    ecx, 1024 * 1024
-        xor    edi, edi
-        xor    eax, eax
-        mov    eax, PG_P | PG_USU | PG_RWW
-        .2:
-            stosd
-            add    eax, 4096
-            loop   .2
-
-        mov    eax, PageDirBase
-        mov    cr3, eax
-        mov    eax, cr0
-        or     eax, 80000000h
-        mov    cr0, eax
-        jmp    short .3
-        .3:
-            nop
-        ret
-
     Read5MB:
         push   esi
         xor    esi, esi
@@ -402,7 +315,7 @@ LEABLE_CODE32:
         pop   esi
         ret
 
-    %include    "libs.inc"
+    %include    "ProtectedMode_lib.inc"
 
     LenCode32  equ  $ - LEABLE_CODE32
 
