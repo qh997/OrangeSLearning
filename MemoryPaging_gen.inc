@@ -41,8 +41,7 @@ PG_USU    EQU  4 ; U/S 属性位值, 用户级
     dw  %2 & 0FFFFh
     dw  %1 & 0FFFFh
     db  (%1 >> 16) & 0FFh
-    db  %3 & 0FFh
-    db  ((%2 >> 16) & 0Fh) | ((%3 >> 8) & 0F0h)
+    dw  ((%2 >> 8) & 0F00h) | (%3 & 0F0FFh)
     db  (%1 >> 24) & 0FFh
 %endmacro
 

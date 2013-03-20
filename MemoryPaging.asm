@@ -3,8 +3,15 @@
 
 %include    "MemoryPaging_gen.inc"
 
-PageDirBase  equ  200000h
-PageTblBase  equ  201000h
+PageDirBase0  equ  200000h
+PageTblBase0  equ  201000h
+PageDirBase1  equ  210000h
+PageTblBase1  equ  211000h
+
+LinearAddrDemo  equ  00401000h
+ProcFoo         equ  00401000h
+ProcBar         equ  00501000h
+ProcPagingDemo  equ  00301000h
 
 org 0100h
 jmp LEABLE_BEGIN
@@ -12,14 +19,14 @@ jmp LEABLE_BEGIN
 ; GDT
 [SECTION .gdt]
     LEABLE_GDT:      Descriptor            0,                0,   0
-    DESC_D_NORMAL:   Descriptor            0,           0ffffh,           DA_DRW
-    DESC_D_PDIR:     Descriptor  PageDirBase,             4095,           DA_DRW
-    DESC_D_PTBL:     Descriptor  PageTblBase,     4096 * 8 - 1,           DA_DRW
-    DESC_C_32:       Descriptor            0,    LenCode32 - 1,   DA_32 + DA_C
-    DESC_C_16:       Descriptor            0,           0ffffh,           DA_C
-    DESC_D_DATA:     Descriptor            0,      LenData - 1,           DA_DRW
-    DESC_D_STACK:    Descriptor            0,         TopStack,   DA_32 + DA_DRWA
-    DESC_D_VIDEO:    Descriptor      0B8000h,           0FFFFh,           DA_DRW
+    DESC_D_NORMAL:   Descriptor            0,           0ffffh,   DA_DRW
+    DESC_FLAT_C:     Descriptor            0,          0fffffh,   DA_32|DA_4K|DA_CR
+    DESC_FLAT_RW:    Descriptor            0,          0fffffh,   DA_4K|DA_DRW
+    DESC_C_32:       Descriptor            0,    LenCode32 - 1,   DA_CR|DA_32
+    DESC_C_16:       Descriptor            0,           0ffffh,   DA_C
+    DESC_D_DATA:     Descriptor            0,      LenData - 1,   DA_DRW
+    DESC_D_STACK:    Descriptor            0,         TopStack,   DA_32|DA_DRWA
+    DESC_D_VIDEO:    Descriptor      0B8000h,           0FFFFh,   DA_DRW
 
     LenGDT  equ  $ - LEABLE_GDT
     GdtPtr: dw   LenGDT - 1
@@ -27,8 +34,8 @@ jmp LEABLE_BEGIN
 
     ; 选择子
     SelectorNormal    equ  DESC_D_NORMAL  - LEABLE_GDT
-    SelectorPageDir   equ  DESC_D_PDIR    - LEABLE_GDT
-    SelectorPageTbl   equ  DESC_D_PTBL    - LEABLE_GDT
+    SelectorFlatC     equ  DESC_FLAT_C    - LEABLE_GDT
+    SelectorFlatRW    equ  DESC_FLAT_RW   - LEABLE_GDT
     SelectorCode32    equ  DESC_C_32      - LEABLE_GDT
     SelectorCode16    equ  DESC_C_16      - LEABLE_GDT
     SelectorData      equ  DESC_D_DATA    - LEABLE_GDT
@@ -58,6 +65,7 @@ LEABLE_DATA:
         _dwLengthLow:       dd    0
         _dwLengthHigh:      dd    0
         _dwType:            dd    0
+    _PageTableNumber        dd    0
     _MemChkBuf:      times  256  db  0
 
     dwDispPos        equ    _dwDispPos - $$
@@ -75,6 +83,7 @@ LEABLE_DATA:
         dwLengthLow        equ    _dwLengthLow - $$
         dwLengthHigh       equ    _dwLengthHigh - $$
         dwType             equ    _dwType - $$
+    PageTableNumber        equ    _PageTableNumber - $$
     MemChkBuf        equ    _MemChkBuf - $$
 
     LenData  equ  $ - LEABLE_DATA
@@ -205,9 +214,9 @@ LEABLE_CODE32:
     add    esp, 4
 
     call   DispMemInfo
-    call   SetupPaging
-
     call   DispReturn
+    call   PagingDemo
+
     jmp    SelectorCode16:0
 
     DispMemInfo:
@@ -255,6 +264,41 @@ LEABLE_CODE32:
         pop    esi
         ret
 
+    PagingDemo:
+        mov    ax, cs
+        mov    ds, ax
+        mov    ax, SelectorFlatRW
+        mov    es, ax
+
+        push   LenFoo
+        push   OffsetFoo
+        push   ProcFoo
+        call   MemCpy
+        add    esp, 12
+
+        push   LenBar
+        push   OffsetBar
+        push   ProcBar
+        call   MemCpy
+        add    esp, 12
+
+        push   LenPagingDemoAll
+        push   OffsetPagingDemoProc
+        push   ProcPagingDemo
+        call   MemCpy
+        add    esp, 12
+
+        mov    ax, SelectorData
+        mov    es, ax
+        mov    ds, ax
+
+        call   SetupPaging
+        call   SelectorFlatC:ProcPagingDemo
+        call   PSwitch
+        call   SelectorFlatC:ProcPagingDemo
+
+        ret
+
     SetupPaging:
         xor    edx, edx
         mov    eax, [dwMemSize]
@@ -266,23 +310,21 @@ LEABLE_CODE32:
         inc    ecx
 
         .no_remainder:
-        push   ecx
-        mov    ax, SelectorPageDir
+        mov    [PageTableNumber], ecx
+        mov    ax, SelectorFlatRW
         mov    es, ax
-        xor    edi, edi
+        mov    edi, PageDirBase0
         xor    eax, eax
-        mov    eax, PageTblBase | PG_P | PG_USU | PG_RWW
+        mov    eax, PageTblBase0 | PG_P | PG_USU | PG_RWW
         .1:
             stosd
             add    eax, 4096
             loop   .1
-        mov    ax, SelectorPageTbl
-        mov    es, ax
-        pop    eax
+        mov    eax, [PageTableNumber]
         mov    ebx, 1024
         mul    ebx
         mov    ecx, eax
-        xor    edi, edi
+        mov    edi, PageTblBase0
         xor    eax, eax
         mov    eax, PG_P | PG_USU | PG_RWW
         .2:
@@ -290,16 +332,91 @@ LEABLE_CODE32:
             add    eax, 4096
             loop   .2
 
-        mov    eax, PageDirBase
+        mov    eax, PageDirBase0
         mov    cr3, eax
         mov    eax, cr0
         or     eax, 80000000h
         mov    cr0, eax
         jmp    short .3
-
         .3:
         nop
+
         ret
+
+    PSwitch:
+        mov    ax, SelectorFlatRW
+        mov    es, ax
+        mov    edi, PageDirBase1
+        xor    eax, eax
+        mov    eax, PageTblBase1 | PG_P | PG_USU | PG_RWW
+        mov    ecx, [PageTableNumber]
+        .1:
+            stosd
+            add    eax, 4096
+            loop   .1
+        mov    eax, [PageTableNumber]
+        mov    ebx, 1024
+        mul    ebx
+        mov    ecx, eax
+        mov    edi, PageTblBase1
+        xor    eax, eax
+        mov    eax, PG_P | PG_USU | PG_RWW
+        .2:
+            stosd
+            add    eax, 4096
+            loop   .2
+
+        mov    eax, LinearAddrDemo
+        shr    eax, 22
+        mov    ebx, 4096
+        mul    ebx
+        mov    ecx, eax
+        mov    eax, LinearAddrDemo
+        shr    eax, 12
+        and    eax, 03FFh
+        mov    ebx, 4
+        mul    ebx
+        add    eax, ecx
+        add    eax, PageTblBase1
+        mov    dword [es:eax], ProcBar | PG_P | PG_USU | PG_RWW
+
+        mov    eax, PageDirBase1
+        mov    cr3, eax
+        jmp    short .3
+        .3:
+        nop
+
+        ret
+
+    PagingDemoProc:
+        OffsetPagingDemoProc  equ  PagingDemoProc - $$
+        mov    eax, LinearAddrDemo
+        call   eax
+        retf
+        LenPagingDemoAll  equ  $ - PagingDemoProc
+
+    foo:
+        OffsetFoo  equ  foo - $$
+        mov    ah, 0Bh
+        mov    al, 'F'
+        mov    [gs:((80 * 17 + 0) * 2)], ax
+        mov    al, 'o'
+        mov    [gs:((80 * 17 + 1) * 2)], ax
+        mov    [gs:((80 * 17 + 2) * 2)], ax
+        ret
+        LenFoo  equ  $ - foo
+
+    bar:
+        OffsetBar  equ  bar - $$
+        mov    ah, 0Bh
+        mov    al, 'B'
+        mov    [gs:((80 * 17 + 3) * 2)], ax
+        mov    al, 'a'
+        mov    [gs:((80 * 17 + 4) * 2)], ax
+        mov    al, 'r'
+        mov    [gs:((80 * 17 + 5) * 2)], ax
+        ret
+        LenBar  equ  $ - bar
 
     %include    "MemoryPaging_lib.inc"
 
