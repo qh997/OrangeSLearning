@@ -1,6 +1,3 @@
-; 编译方法：nasm -o execute.com MemoryPaging.asm
-; 复制文件：./copy_com.sh
-
 %include    "MemoryPaging_gen.inc"
 
 PageDirBase0  equ  200000h

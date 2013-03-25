@@ -1,6 +1,3 @@
-; 编译方法：nasm -o execute.com ProtectedMode.asm
-; 复制文件：./copy_com.sh
-
 %include    "ProtectedMode_gen.inc"
 
 org 0100h

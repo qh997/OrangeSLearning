@@ -1,6 +1,3 @@
-; 编译方法：nasm -o OSboot.bin OSboot.asm
-; 制作镜像：dd if=OSboot.bin of=images/boot.img bs=512 count=1 conv=notrunc
-
 ;%define  _BOOT_DEBUG_
 
 %ifdef  _BOOT_DEBUG_

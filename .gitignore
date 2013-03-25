@@ -2,4 +2,5 @@ images/
 *.img
 *.bin
 *.com
+*.o
 bochsrc

@@ -1,6 +1,3 @@
-; 编译方法：nasm -o pmBoot.bin pmBoot.asm
-; 制作镜像：dd if=pmBoot.bin of=boot.img bs=512 count=1 conv=notrunc
-
 ; 字符串打印启始位置
 %define PrintStart(row, col) (80 * row + col) * 2
 
