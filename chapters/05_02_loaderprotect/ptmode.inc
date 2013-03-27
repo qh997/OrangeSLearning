@@ -33,6 +33,8 @@ PG_RWW    EQU  2 ; R/W 属性位值, 读/写/执行
 PG_USS    EQU  0 ; U/S 属性位值, 系统级
 PG_USU    EQU  4 ; U/S 属性位值, 用户级
 
+PGN       EQU  PG_P | PG_USU | PG_RWW
+
 ; 字符串打印启始位置
 %define DispStart(row, col) (80 * row + col) * 2
 

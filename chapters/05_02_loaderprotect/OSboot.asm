@@ -136,7 +136,7 @@ LABEL_START:
 
     jmp    BaseOfLoader:OffsetOfLoader ; 跳转到内存中 loader.bin 开始处，并交出控制权
 
-%include  "lib.inc"
+%include  "lib_rm.inc"
 
 wSectorNo:            dw   0              ; 要读取的扇区号
 wRootDirSizeForLoop:  dw   RootDirSectors ; 用于循环的根目录占用的扇区数, 在循环中会递减至零

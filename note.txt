@@ -82,3 +82,32 @@ Selector 选择子
     ┣━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━┻━━╋━━╋━━┻━━┫
     ┃               描述符索引             ┃TI┃ RPL ┃
     ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┻━━┻━━━━━┛
+
+ELF headers
+    typedef struct {
+        unsigned char e_ident[16]; // 00: 
+        Elf32_Half    e_type;      // 10: 文件类型
+        Elf32_Half    e_machine;   // 12: 该程序依赖的体系结构
+        Elf32_word    e_version;   // 14: 版本
+        Elf32_addr    e_entry;     // 18: 程序入口地址
+        Elf32_off     e_phoff;     // 1C: Program header table 在文件中的偏移量
+        Elf32_off     e_shoff;     // 20: Section header table 在文件中的偏移量
+        Elf32_word    e_flags;     // 24:
+        Elf32_Half    e_ehsize;    // 28: ELF header 大小
+        Elf32_Half    e_phentsize; // 2A: 一个 Program header 的大小
+        Elf32_Half    e_phnum;     // 2C: Program header 的数量
+        Elf32_Half    e_shentsize; // 2E: 一个 Section header 的大小
+        Elf32_Half    e_shnum;     // 30: Section header 的数量
+        Elf32_Half    e_shstrndx;  // 32:
+    } Elf32_Ehdr;
+
+    typedef struct {
+        Elf32_word    p_type;      // 00: 段类型
+        Elf32_off     p_offset;    // 04: 该段第一个字节在文件中的偏移
+        Elf32_addr    p_vaddr;     // 08: 该段第一个字节在内存中的虚拟地址
+        Elf32_addr    p_paddr;     // 0C: 为物理地址保留
+        Elf32_word    p_filesz;    // 10: 段在文件中的长度
+        Elf32_word    p_memsz;     // 14: 段在内存中的长度
+        Elf32_word    p_flags;     // 18: 与段相关的标志
+        Elf32_word    p_align;     // 1C: 该段在文件以及内存中对齐方式
+    } Elf32_Phdr;

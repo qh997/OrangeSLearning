@@ -41,7 +41,7 @@ $(OBJ_KERNEL): OSkernel.asm
 	@echo
 	@echo Compile kernel
 	nasm -f elf32 -o kernel.o $^
-	ld -s -m elf_i386 -o $@ kernel.o
+	ld -s -Ttext 0x30400 -m elf_i386 -o $@ kernel.o
 	-rm kernel.o
 
 install_kernel: $(OBJ_KERNEL)
