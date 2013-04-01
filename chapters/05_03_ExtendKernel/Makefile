@@ -1,3 +1,39 @@
+ASM := nasm
+CC := gcc
+LD := ld
+ENTRYPOINT := 0x30400
+
+OUT_DIR := out
+MKDIR_OUT := @[ -s out ] || mkdir $(OUT_DIR)
+
+IMG_FILE := boot.img
+IMG_MOUNT := /mnt/floppy
+
+BOOT_PATH := boot
+BOOT_INC := $(BOOT_PATH)/include
+BOOT_SRC := $(BOOT_PATH)/OSboot.asm
+BOOT_HDR := $(BOOT_INC)/fat12.inc \
+            $(BOOT_INC)/lib_rm.inc
+BOOT_BIN := $(OUT_DIR)/boot.bin
+
+LOADER_SRC := $(BOOT_PATH)/OSloader.asm
+LOADER_HDR := $(BOOT_INC)/fat12.inc \
+              $(BOOT_INC)/lib_rm.inc \
+              $(BOOT_INC)/ptmode.inc
+LOADER_BIN := $(OUT_DIR)/loader.bin
+
+KERNEL_PATH := kernel
+LIB_PATH := lib
+KERNEL_INC := include
+KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
+KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -fno-builtin
+KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT) 
+KERNEL_OBJ := $(OUT_DIR)/kernel.o \
+              $(OUT_DIR)/start.o \
+              $(OUT_DIR)/klib.o \
+              $(OUT_DIR)/string.o
+KERNEL_BIN := $(OUT_DIR)/kernel.bin
+
 OBJ_BOOT := boot.bin
 OBJ_LOADER := loader.bin
 OBJ_KERNEL := kernel.bin
@@ -6,50 +42,59 @@ OBJECTS += $(OBJ_BOOT)
 OBJECTS += $(OBJ_LOADER)
 OBJECTS += $(OBJ_KERNEL)
 
-.PHONY: bin install clean install_boot install_loader install_kernel
+.PHONY: all init clean install install_boot install_loader install_kernel
 
-bin: $(OBJECTS)
+all: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
 
-install: install_boot install_loader install_kernel
+init:
+	@echo qh Operating System
+	@echo
+	$(MKDIR_OUT)
+
+install: all install_boot install_loader install_kernel
 
 clean:
-	-rm $(OBJECTS)
+	-rm -rf $(OUT_DIR)/
 
-$(OBJ_BOOT): OSboot.asm
-	@echo
-	@echo Compile boot
-	nasm -o $@ $^
-
-install_boot: $(OBJ_BOOT)
+install_boot: $(BOOT_BIN)
 	@echo
 	@echo Install boot
-	dd if=$^ of=boot.img bs=512 count=1 conv=notrunc
-
-$(OBJ_LOADER): OSloader.asm
+	dd if=$^ of=$(IMG_FILE) bs=512 count=1 conv=notrunc
 	@echo
-	@echo Compile loader
-	nasm -o $@ $^
 
-install_loader: $(OBJ_LOADER)
+install_loader: $(LOADER_BIN)
 	@echo
 	@echo Install loader
-	sudo mount -o loop boot.img /mnt/floppy
-	sudo cp $^ /mnt/floppy/.
-	sudo umount /mnt/floppy
-
-$(OBJ_KERNEL): OSkernel.asm
+	sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
+	sudo cp $^ $(IMG_MOUNT)
+	sudo umount $(IMG_MOUNT)
 	@echo
-	@echo Compile kernel
-	nasm -f elf32 -o kernel.o $^
-	nasm -f elf32 -o string.o Kstring.asm
-	nasm -f elf32 -o klib.o Klib.asm
-	gcc -c -m32 -fno-builtin -o start.o Kstart.c
-	ld -s -Ttext 0x30400 -m elf_i386 -o $@ kernel.o string.o start.o klib.o
-	-rm kernel.o string.o start.o klib.o
 
-install_kernel: $(OBJ_KERNEL)
+install_kernel: $(KERNEL_BIN)
 	@echo
 	@echo Install kernel
-	sudo mount -o loop boot.img /mnt/floppy
+	sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
 	sudo cp $^ /mnt/floppy/.
 	sudo umount /mnt/floppy
+	@echo
+
+$(BOOT_BIN): $(BOOT_SRC) $(BOOT_HDR)
+	$(ASM) -I $(BOOT_INC)/ -o $@ $<
+
+$(LOADER_BIN): $(LOADER_SRC) $(LOADER_HDR)
+	$(ASM) -I $(BOOT_INC)/ -o $@ $<
+
+$(KERNEL_BIN): $(KERNEL_OBJ)
+	$(LD) $(KERNEL_LD_FLAG) -o $@ $^
+
+$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/OSkernel.asm
+	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+
+$(OUT_DIR)/string.o: $(LIB_PATH)/Kstring.asm
+	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+
+$(OUT_DIR)/klib.o: $(LIB_PATH)/Klib.asm
+	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+
+$(OUT_DIR)/start.o: $(KERNEL_PATH)/Kstart.c
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
