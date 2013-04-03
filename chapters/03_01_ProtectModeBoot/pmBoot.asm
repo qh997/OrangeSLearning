@@ -24,10 +24,10 @@
 %endmacro
 
 org 07c00h
-jmp LEABLE_MAIN
+jmp LABEL_MAIN
 
 ; GDT
-LEABLE_GDT:        Descriptor        0,                0,     0
+LABEL_GDT:         Descriptor        0,                0,     0
 DESCRIPTOR_NORMAL: Descriptor        0,           0ffffh, 0092h
 DESCRIPTOR_CODE32: Descriptor        0, SegCode32Len - 1, 4098h
 DESCRIPTOR_CODE16: Descriptor        0,           0ffffh, 0098h
@@ -35,37 +35,37 @@ DESCRIPTOR_DATA:   Descriptor        0,      DataLen - 1, 0092h
 DESCRIPTOR_5MB:    Descriptor 0500000h,           0ffffh, 0092h
 DESCRIPTOR_VEDIO:  Descriptor  0B8000h,           0FFFFh, 0092h
 
-GdtLen  equ  $ - LEABLE_GDT
+GdtLen  equ  $ - LABEL_GDT
 GdtPtr  dw   GdtLen - 1
         dd   0
 
 ; 选择子
-SelectorNML  equ  DESCRIPTOR_NORMAL - LEABLE_GDT
-SelectorC32  equ  DESCRIPTOR_CODE32 - LEABLE_GDT
-SelectorC16  equ  DESCRIPTOR_CODE16 - LEABLE_GDT
-SelectorDAT  equ  DESCRIPTOR_DATA   - LEABLE_GDT
-Selector5MB  equ  DESCRIPTOR_5MB    - LEABLE_GDT
-SelectorVDO  equ  DESCRIPTOR_VEDIO  - LEABLE_GDT
+SelectorNML  equ  DESCRIPTOR_NORMAL - LABEL_GDT
+SelectorC32  equ  DESCRIPTOR_CODE32 - LABEL_GDT
+SelectorC16  equ  DESCRIPTOR_CODE16 - LABEL_GDT
+SelectorDAT  equ  DESCRIPTOR_DATA   - LABEL_GDT
+Selector5MB  equ  DESCRIPTOR_5MB    - LABEL_GDT
+SelectorVDO  equ  DESCRIPTOR_VEDIO  - LABEL_GDT
 
 ; 数据
 ALIGN 32
 [BITS 32]
-LEABLE_DATA:
+LABEL_DATA:
     spValueReal:   dw    0
     HELLO_MSG:     db    'Hello, Operating System!!'
     LenHELLO_MSG   equ   $ - HELLO_MSG
     ProMod_MSG:    db    'Hello, Protected Mode!'
     LenProMod_MSG  equ   $ - ProMod_MSG
-    DataLen        equ   $ - LEABLE_DATA
+    DataLen        equ   $ - LABEL_DATA
 
 [BITS 16]
-LEABLE_MAIN:
+LABEL_MAIN:
     mov    ax, cs
     mov    ds, ax
     mov    es, ax
     mov    ss, ax
     mov    sp, 0100h
-    mov    [LEABLE_REAL_RETURN + 3], ax
+    mov    [LABEL_REAL_RETURN + 3], ax
     mov    [spValueReal], sp
 
     mov    ax, 0B800h
@@ -89,14 +89,14 @@ LEABLE_MAIN:
         add   di, 2
     loop   SHOW
 
-    InitGDT LEABLE_CODE16, DESCRIPTOR_CODE16
-    InitGDT LEABLE_CODE32, DESCRIPTOR_CODE32
-    InitGDT LEABLE_DATA, DESCRIPTOR_DATA
+    InitGDT LABEL_CODE16, DESCRIPTOR_CODE16
+    InitGDT LABEL_CODE32, DESCRIPTOR_CODE32
+    InitGDT LABEL_DATA, DESCRIPTOR_DATA
 
     xor    eax, eax
     mov    ax, ds
     shl    eax, 4
-    add    eax, LEABLE_GDT
+    add    eax, LABEL_GDT
     mov    dword [GdtPtr + 2], eax
     lgdt   [GdtPtr]
 
@@ -112,7 +112,7 @@ LEABLE_MAIN:
 
     jmp   dword SelectorC32:0
 
-LEABLE_REAL_RETURN:
+LABEL_REAL_RETURN:
     mov    ax, cs
     mov    ds, ax
     mov    es, ax
@@ -137,7 +137,7 @@ LEABLE_REAL_RETURN:
     jmp    $
 
 [BITS 32]
-LEABLE_CODE32:
+LABEL_CODE32:
     mov    ax, SelectorVDO
     mov    gs, ax
     xor    edi, edi
@@ -174,10 +174,10 @@ LEABLE_CODE32:
 
     jmp    SelectorC16:0
 
-SegCode32Len  equ  $ - LEABLE_CODE32
+SegCode32Len  equ  $ - LABEL_CODE32
 
 [BITS 16]
-LEABLE_CODE16:
+LABEL_CODE16:
     mov    ax, SelectorNML
     mov    ds, ax
     mov    es, ax
@@ -189,8 +189,8 @@ LEABLE_CODE16:
     and    ax, 11111110b
     mov    cr0, eax
 
-LEABLE_RETURN_REAL:
-    jmp    0:LEABLE_REAL_RETURN
+LABEL_RETURN_REAL:
+    jmp    0:LABEL_REAL_RETURN
 
 times 510 - ($ - $$) db 0
 dw 0aa55h
