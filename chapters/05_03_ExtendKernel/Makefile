@@ -11,12 +11,12 @@ IMG_MOUNT := /mnt/floppy
 
 BOOT_PATH := boot
 BOOT_INC := $(BOOT_PATH)/include
-BOOT_SRC := $(BOOT_PATH)/OSboot.asm
+BOOT_SRC := $(BOOT_PATH)/boot.asm
 BOOT_HDR := $(BOOT_INC)/fat12.inc \
             $(BOOT_INC)/lib_rm.inc
 BOOT_BIN := $(OUT_DIR)/boot.bin
 
-LOADER_SRC := $(BOOT_PATH)/OSloader.asm
+LOADER_SRC := $(BOOT_PATH)/loader.asm
 LOADER_HDR := $(BOOT_INC)/fat12.inc \
               $(BOOT_INC)/lib_rm.inc \
               $(BOOT_INC)/ptmode.inc
@@ -30,7 +30,7 @@ KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -fno-builtin
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT) 
 KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/start.o \
-              $(OUT_DIR)/klib.o \
+              $(OUT_DIR)/kliba.o \
               $(OUT_DIR)/string.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
@@ -87,14 +87,14 @@ $(LOADER_BIN): $(LOADER_SRC) $(LOADER_HDR)
 $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/OSkernel.asm
+$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm
 	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/string.o: $(LIB_PATH)/Kstring.asm
+$(OUT_DIR)/string.o: $(LIB_PATH)/string.asm
 	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/klib.o: $(LIB_PATH)/Klib.asm
+$(OUT_DIR)/kliba.o: $(LIB_PATH)/kliba.asm
 	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/start.o: $(KERNEL_PATH)/Kstart.c
+$(OUT_DIR)/start.o: $(KERNEL_PATH)/start.c
 	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
