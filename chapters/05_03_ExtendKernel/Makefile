@@ -9,6 +9,13 @@ MKDIR_OUT := @[ -s out ] || mkdir $(OUT_DIR)
 IMG_FILE := boot.img
 IMG_MOUNT := /mnt/floppy
 
+HEADS := include/const.h \
+         include/global.h \
+         include/protect.h \
+         include/proto.h \
+         include/string.h \
+         include/type.h
+
 BOOT_PATH := boot
 BOOT_INC := $(BOOT_PATH)/include
 BOOT_SRC := $(BOOT_PATH)/boot.asm
@@ -26,12 +33,16 @@ KERNEL_PATH := kernel
 LIB_PATH := lib
 KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
-KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -fno-builtin
-KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT) 
+KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector
+KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
 KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/start.o \
               $(OUT_DIR)/kliba.o \
-              $(OUT_DIR)/string.o
+              $(OUT_DIR)/string.o \
+              $(OUT_DIR)/i8259.o \
+              $(OUT_DIR)/protect.o \
+              $(OUT_DIR)/global.o \
+              $(OUT_DIR)/klib.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
 OBJ_BOOT := boot.bin
@@ -87,7 +98,7 @@ $(LOADER_BIN): $(LOADER_SRC) $(LOADER_HDR)
 $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm
+$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm $(HEADS)
 	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
 $(OUT_DIR)/string.o: $(LIB_PATH)/string.asm
@@ -96,5 +107,17 @@ $(OUT_DIR)/string.o: $(LIB_PATH)/string.asm
 $(OUT_DIR)/kliba.o: $(LIB_PATH)/kliba.asm
 	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/start.o: $(KERNEL_PATH)/start.c
+$(OUT_DIR)/start.o: $(KERNEL_PATH)/start.c $(HEADS)
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/i8259.o: $(KERNEL_PATH)/i8259.c $(HEADS)
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/protect.o: $(KERNEL_PATH)/protect.c $(HEADS)
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/global.o: $(KERNEL_PATH)/global.c $(HEADS)
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c
 	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

@@ -6,7 +6,6 @@ jmp    LABEL_BEGIN
 ; GDT
 [SECTION .gdt]
     LABEL_GDT:     Descriptor       0,             0, 0
-    DESC_D_NORMAL: Descriptor       0,        0ffffh, DA_DRW
     DESC_C_32:     Descriptor       0, LenCode32 - 1, DA_32 + DA_C
     DESC_D_VEDIO:  Descriptor 0B8000h,        0ffffh, DA_DRW
 
@@ -14,7 +13,6 @@ jmp    LABEL_BEGIN
     GdtPtr  dw   GdtLen - 1
             dd   0
 
-    SelectorNML  equ  DESC_D_NORMAL - LABEL_GDT
     SelectorC32  equ  DESC_C_32 - LABEL_GDT
     SelectorVdo  equ  DESC_D_VEDIO - LABEL_GDT
 
@@ -82,48 +80,48 @@ LABEL_CODE32:
     mov    gs, ax
 
     call   Init8259A
-    sti
-
     int    080h
+    sti              ; 开中断
+
     jmp    $
 
 Init8259A:
     mov    al, 011h
-    out    020h, al
+    out    020h, al ; 主8259, ICW1
     call   io_delay
     
-    out    0A0h, al
+    out    0A0h, al ; 从8259, ICW1
     call   io_delay
 
     mov    al, 020h
-    out    021h, al
+    out    021h, al ; 主8259, ICW2
     call   io_delay
 
     mov    al, 028h
-    out    0A1h, al
+    out    0A1h, al ; 从8259, ICW2
     call   io_delay
 
     mov    al, 004h
-    out    021h, al
+    out    021h, al ; 主8259, ICW3
     call   io_delay
 
     mov    al, 002h
-    out    0A1h, al
+    out    0A1h, al ; 从8259, ICW3
     call   io_delay
 
     mov    al, 001h
-    out    021h, al
+    out    021h, al ; 主8259, ICW4
     call   io_delay
 
-    out    0A1h, al
+    out    0A1h, al ; 从8259, ICW4
     call   io_delay
 
-    mov    al, 11111110b
-    out    021h, al
+    mov    al, 0FEh
+    out    021h, al ; 主8259, OCW1
     call   io_delay
 
-    mov    al, 11111111b
-    out    0A1h, al
+    mov    al, 0FFh
+    out    0A1h, al ; 从8259, OCW1
     call   io_delay
 
     ret
@@ -144,6 +142,9 @@ _SpuriousHandler:
 
 _UserIntHandler:
     UserIntHandler  equ  _UserIntHandler - $$
+    mov    ah, 0Ch
+    mov    al, 'G'
+    mov    [gs:((80 * 0 + 69) * 2)], ax
     mov    ah, 0Ch
     mov    al, 'I'
     mov    [gs:((80 * 0 + 70) * 2)], ax
