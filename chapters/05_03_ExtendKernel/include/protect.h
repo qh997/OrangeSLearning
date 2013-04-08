@@ -83,4 +83,5 @@ typedef struct s_gate
 /* 中断向量 */
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
+
 #endif

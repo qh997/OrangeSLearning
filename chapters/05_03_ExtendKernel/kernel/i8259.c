@@ -1,4 +1,3 @@
-
 #include "type.h"
 #include "proto.h"
 #include "const.h"
@@ -14,6 +13,13 @@ PUBLIC void init_8259A()
     out_byte(INT_S_CTLMASK, 0x02);
     out_byte(INT_M_CTLMASK, 0x01);
     out_byte(INT_S_CTLMASK, 0x01);
-    out_byte(INT_M_CTLMASK, 0xFF);
+    out_byte(INT_M_CTLMASK, 0xFD);
     out_byte(INT_S_CTLMASK, 0xFF);
+}
+
+PUBLIC void spurious_irq(int irq)
+{
+    disp_str("spurious_irq: ");
+    disp_int(irq);
+    disp_str("\n");
 }
