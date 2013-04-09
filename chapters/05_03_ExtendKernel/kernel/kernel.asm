@@ -76,8 +76,8 @@ _start:
 csinit:
     ;ud2
     ;jmp    0x40:0
-    sti
 
+    sti
     hlt
 
 ; 硬件中断
