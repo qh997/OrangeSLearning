@@ -31,10 +31,10 @@ typedef struct s_gate
 #define INDEX_FLAT_RW 2 // ┃
 #define INDEX_VIDEO   3 // ┛
 /* 选择子 */
-#define SELECTOR_DUMMY   0        // ┓
-#define SELECTOR_FLAT_C  0x08     // ┣ LOADER 里面已经确定了的.
-#define SELECTOR_FLAT_RW 0x10     // ┃
-#define SELECTOR_VIDEO   (0x18+3) // ┛<-- RPL=3
+#define SELECTOR_DUMMY    0x00      // ┓
+#define SELECTOR_FLAT_C   0x08      // ┣ LOADER 里面已经确定了的.
+#define SELECTOR_FLAT_RW  0x10      // ┃
+#define SELECTOR_VIDEO   (0x18 + 3) // ┛<-- RPL=3
 
 #define SELECTOR_KERNEL_CS  SELECTOR_FLAT_C
 #define SELECTOR_KERNEL_DS  SELECTOR_FLAT_RW

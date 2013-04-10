@@ -1,21 +1,12 @@
-;%define  _BOOT_DEBUG_
 
-%ifdef  _BOOT_DEBUG_
-    BaseOfStack  equ  0100h
-%else
-    BaseOfStack  equ  07c00h
-%endif
+BaseOfStack  equ  07c00h
 
-%ifdef  _BOOT_DEBUG_
-    org    0100h
-%else
-    org    07c00h
-%endif
-
+org    07c00h
 jmp    short LABEL_START
 nop
 
 %include  "fat12.inc"
+%include  "load.inc"
 
 LABEL_START:
     mov    ax, cs
@@ -86,13 +77,7 @@ LABEL_START:
     LABEL_NO_LOADERBIN:
         mov    dx, 0200h
         call   DispStrRM
-
-        %ifdef  _BOOT_DEBUG_
-            mov    ax, 4c00h
-            int    21h
-        %else
-            jmp    $
-        %endif
+        jmp    $
 
     LABEL_FILENAME_FOUND:
         mov    ax, RootDirSectors

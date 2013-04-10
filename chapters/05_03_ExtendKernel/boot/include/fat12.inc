@@ -1,16 +1,3 @@
-SectorNoOfRootDir        equ  19     ; 根目录区的第一个扇区号
-RootDirSectors           equ  14     ; 根目录区占用的扇区数（RootDirSectors' = (BPB_RootEntCnt * 32) / BPB_BytsPerSec）
-DeltaSectorNo            equ  17     ; 数据区开始的扇区号 - 根目录区占用的扇区数（RootDirSectors）
-SectorNoOfFAT1           equ  1
-
-BaseOfLoader             equ  09000h
-OffsetOfLoader           equ   0100h
-BaseOfLoaderPhyAddr      equ  BaseOfLoader * 10h     ; LOADER.BIN 被加载到的位置 - 物理地址
-
-BaseOfKernelFile         equ  08000h                 ; KERNEL.BIN 被加载到的位置 - 段地址
-OffsetOfKernelFile       equ      0h                 ; KERNEL.BIN 被加载到的位置 - 偏移地址
-BaseOfKernelFilePhyAddr  equ  BaseOfKernelFile * 10h ;
-KernelEntryPointPhyAddr  equ  030400h                ;
 
 ; FAT12
     BS_OEMName      DB  'ForrestY'     ; OEM String, 必须 8 个字节
@@ -32,3 +19,8 @@ KernelEntryPointPhyAddr  equ  030400h                ;
     BS_VolID        DD  0              ; 卷序列号
     BS_VolLab       DB  'OrangeS0.02'  ; 卷标, 必须 11 个字节
     BS_FileSysType  DB  'FAT12   '     ; 文件系统类型, 必须 8个字节
+
+SectorNoOfRootDir        equ  19  ; 根目录区的第一个扇区号
+RootDirSectors           equ  14  ; 根目录区占用的扇区数（RootDirSectors' = (BPB_RootEntCnt * 32) / BPB_BytsPerSec）
+DeltaSectorNo            equ  17  ; 数据区开始的扇区号 - 根目录区占用的扇区数（RootDirSectors）
+SectorNoOfFAT1           equ  1

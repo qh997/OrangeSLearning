@@ -1,17 +1,5 @@
-SELECTOR_KERNEL_CS  equ  8
 
-%macro  hwint_master 1
-    push   %1
-    call   spurious_irq
-    add    esp, 4
-    hlt
-%endmacro
-%macro  hwint_slave 1
-    push   %1
-    call   spurious_irq
-    add    esp, 4
-    hlt
-%endmacro
+SELECTOR_KERNEL_CS  equ  8 ; LABEL_DESC_FLAT_C  - LABEL_GDT = 8
 
 extern  cstart
 extern  exception_handler
@@ -22,7 +10,7 @@ extern  gdt_ptr
 extern  idt_ptr
 
 [section .bss]
-StackSpace:  resb  2 * 1024
+StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
 StackTop:
 
 [section .text]
@@ -62,24 +50,55 @@ global  hwint13
 global  hwint14
 global  hwint15
 
+; 内存示意图
+    ;           ┃             ...            ┃
+    ;           ┃                            ┃
+    ;           ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃■■■■■■■ Page  Tables ■■■■■■■┃
+    ;           ┃■■■■ (Decide by LOADER) ■■■■┃ PageTblBase
+    ; 00101000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃■■■ Page Directory Table ■■■┃ PageDirBase = 1M
+    ; 00100000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃□□□□ Hardware  Reserved □□□□┃ B8000h ← gs
+    ;    9FC00h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃■■■■■■■■ LOADER.BIN ■■■■■■■■┃ somewhere in LOADER ← esp
+    ;    90000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃■■■■■■■■ KERNEL.BIN ■■■■■■■■┃
+    ;    80000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┃■■■■■■■■■■ KERNEL ■■■■■■■■■■┃ 30400h ← KERNEL 入口 (KernelEntryPointPhyAddr)
+    ;    30000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+    ;           ┋            ...             ┋
+    ;           ┋                            ┋
+    ;        0h ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ← cs, ds, es, fs, ss
+
 _start:
-    mov    esp, StackTop
+    mov    esp, StackTop       ; 切换堆栈
     mov    dword [disp_pos], 0
     
-    sgdt   [gdt_ptr]
-    call   cstart
-    lgdt   [gdt_ptr]
+    sgdt   [gdt_ptr] ; ┓
+    call   cstart    ; ┣ 更换 GDT
+    lgdt   [gdt_ptr] ; ┛
+
     lidt   [idt_ptr]
 
-    jmp    SELECTOR_KERNEL_CS:csinit
+    jmp    SELECTOR_KERNEL_CS:csinit ; 这个跳转指令强制使用刚刚初始化的结构
 
 csinit:
-    ;ud2
-    ;jmp    0x40:0
-
     sti
     hlt
 
+%macro  hwint_master 1
+    push   %1
+    call   spurious_irq
+    add    esp, 4
+    hlt
+%endmacro
+%macro  hwint_slave 1
+    push   %1
+    call   spurious_irq
+    add    esp, 4
+    hlt
+%endmacro
 ; 硬件中断
     ALIGN  16
     hwint00:            ; clock
@@ -107,28 +126,28 @@ csinit:
         hwint_master  7
     ALIGN  16
     hwint08:            ; realtime clock
-        hwint_master  8
+        hwint_slave   8
     ALIGN  16
     hwint09:            ; irq 2 redirected
-        hwint_master  9
+        hwint_slave   9
     ALIGN  16
     hwint10:            ; 
-        hwint_master  10
+        hwint_slave  10
     ALIGN  16
     hwint11:            ; 
-        hwint_master  11
+        hwint_slave  11
     ALIGN  16
     hwint12:            ; 
-        hwint_master  12
+        hwint_slave  12
     ALIGN  16
     hwint13:            ; FPU exception
-        hwint_master  13
+        hwint_slave  13
     ALIGN  16
     hwint14:            ; AT winchester
-        hwint_master  14
+        hwint_slave  14
     ALIGN  16
     hwint15:            ; 
-        hwint_master  15
+        hwint_slave  15
 
 ; 异常
     divide_error:
