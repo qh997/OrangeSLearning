@@ -7,12 +7,18 @@ extern  cstart
 extern  exception_handler
 extern  spurious_irq
 extern  kernel_main
+extern  disp_str
 
 extern  disp_pos
 extern  gdt_ptr
 extern  idt_ptr
 extern  p_proc_ready
 extern  tss
+
+BITS  32
+
+[section .data]
+clock_int_msg  db  "^", 0
 
 [section .bss]
 StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
@@ -114,34 +120,68 @@ csinit:
 %endmacro
 ; 硬件中断
     ALIGN  16
-    hwint00:            ; clock
-        hwint_master  0
+    hwint00:            ; <clock>
+        sub    esp, 4 ; 此时 ss/esp/eflags/cs/eip 已经压栈
+        pushad        ; ┓
+        push   ds     ; ┃
+        push   es     ; ┣ 保护现场
+        push   fs     ; ┃
+        push   gs     ; ┛
+
+        mov    dx, ss
+        mov    ds, dx
+        mov    es, dx
+
+        mov    esp, StackTop
+
+        inc    byte [gs:(39 * 2)]
+
+        mov    al, EOI
+        out    INT_M_CTL, al
+
+        push   clock_int_msg
+        call   disp_str
+        add    esp, 4
+
+        mov    esp, [p_proc_ready]
+
+        lea    eax, [esp + P_STACKTOP]
+        mov    dword [tss + TSS3_S_SP0], eax
+
+        pop    gs     ; ┓
+        pop    fs     ; ┃
+        pop    es     ; ┣ 恢复现场
+        pop    ds     ; ┃
+        popad         ; ┛
+        add    esp, 4 ; 跳过 retaddr
+
+        iretd
     ALIGN  16
-    hwint01:            ; keyboard
+    hwint01:            ; <keyboard>
         hwint_master  1
     ALIGN  16
-    hwint02:            ; cascade!
+    hwint02:            ; <cascade!>
         hwint_master  2
     ALIGN  16
-    hwint03:            ; second serial
+    hwint03:            ; <second serial>
         hwint_master  3
     ALIGN  16
-    hwint04:            ; first serial
+    hwint04:            ; <first serial>
         hwint_master  4
     ALIGN  16
-    hwint05:            ; XT winchester
+    hwint05:            ; <XT winchester>
         hwint_master  5
     ALIGN  16
-    hwint06:            ; floppy
+    hwint06:            ; <floppy>
         hwint_master  6
     ALIGN  16
-    hwint07:            ; printer
+    hwint07:            ; <printer>
         hwint_master  7
     ALIGN  16
-    hwint08:            ; realtime clock
+    hwint08:            ; <realtime clock>
         hwint_slave   8
     ALIGN  16
-    hwint09:            ; irq 2 redirected
+    hwint09:            ; <irq 2 redirected>
         hwint_slave   9
     ALIGN  16
     hwint10:            ; 
@@ -153,10 +193,10 @@ csinit:
     hwint12:            ; 
         hwint_slave  12
     ALIGN  16
-    hwint13:            ; FPU exception
+    hwint13:            ; <FPU exception>
         hwint_slave  13
     ALIGN  16
-    hwint14:            ; AT winchester
+    hwint14:            ; <AT winchester>
         hwint_slave  14
     ALIGN  16
     hwint15:            ; 
@@ -228,10 +268,10 @@ csinit:
         hlt
 
 restart:
-    mov    esp, [p_proc_ready]
-    lldt   [esp + P_LDT_SEL]
-    lea    eax, [esp + P_STACKTOP]
-    mov    dword [tss + TSS3_S_SP0], eax
+    mov    esp, [p_proc_ready]           ; 下一个要启动的进程
+    lldt   [esp + P_LDT_SEL]             ; 加载该进程的 LDT
+    lea    eax, [esp + P_STACKTOP]       ; ┓ 下一次中断发生时，esp 将变成 s_proc.regs 的末地址
+    mov    dword [tss + TSS3_S_SP0], eax ; ┻ 然后再将该进程的 ss/esp/eflags/cs/eip 压栈
 
     pop    gs
     pop    fs

@@ -13,7 +13,7 @@ PUBLIC void init_8259A()
     out_byte(INT_S_CTLMASK, 0x02);            // 从8259, ICW3
     out_byte(INT_M_CTLMASK, 0x01);            // 主8259, ICW4
     out_byte(INT_S_CTLMASK, 0x01);            // 从8259, ICW4
-    out_byte(INT_M_CTLMASK, 0xFD);            // 主8259, OCW1
+    out_byte(INT_M_CTLMASK, 0xFE);            // 主8259, OCW1
     out_byte(INT_S_CTLMASK, 0xFF);            // 从8259, OCW1
 }
 
