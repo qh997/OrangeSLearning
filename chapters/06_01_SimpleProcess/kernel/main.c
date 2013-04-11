@@ -27,6 +27,8 @@ PUBLIC int kernel_main()
     p_proc->regs.esp= (u32)task_stack + STACK_SIZE_TOTAL;
     p_proc->regs.eflags = 0x1202;
 
+    k_reenter = -1;
+
     p_proc_ready = &proc_table[0];
     restart();
 

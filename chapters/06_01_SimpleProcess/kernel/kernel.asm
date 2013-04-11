@@ -8,12 +8,14 @@ extern  exception_handler
 extern  spurious_irq
 extern  kernel_main
 extern  disp_str
+extern  delay
 
 extern  disp_pos
 extern  gdt_ptr
 extern  idt_ptr
 extern  p_proc_ready
 extern  tss
+extern  k_reenter
 
 BITS  32
 
@@ -97,8 +99,8 @@ _start:
     jmp    SELECTOR_KERNEL_CS:csinit ; 这个跳转指令强制使用刚刚初始化的结构
 
 csinit:
-    ;sti
-    ;hlt
+;;    sti
+;;    hlt
 
     xor    eax, eax
     mov    ax, SELECTOR_TSS
@@ -132,22 +134,36 @@ csinit:
         mov    ds, dx
         mov    es, dx
 
-        mov    esp, StackTop
-
         inc    byte [gs:(39 * 2)]
 
         mov    al, EOI
         out    INT_M_CTL, al
 
+        inc    dword [k_reenter]
+        cmp    dword [k_reenter], 0
+        jne    .re_enter
+
+        mov    esp, StackTop
+
+        sti
+
         push   clock_int_msg
         call   disp_str
         add    esp, 4
+
+;;        push   1
+;;        call   delay
+;;        add    esp, 4
+
+        cli
 
         mov    esp, [p_proc_ready]
 
         lea    eax, [esp + P_STACKTOP]
         mov    dword [tss + TSS3_S_SP0], eax
 
+        .re_enter:
+            dec    dword [k_reenter]
         pop    gs     ; ┓
         pop    fs     ; ┃
         pop    es     ; ┣ 恢复现场

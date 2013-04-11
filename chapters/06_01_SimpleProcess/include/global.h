@@ -16,6 +16,8 @@ EXTERN u8         gdt_ptr[6];
 EXTERN GATE       idt[IDT_SIZE];
 EXTERN u8         idt_ptr[6];
 
+EXTERN u32        k_reenter;
+
 EXTERN TSS        tss;
 EXTERN PROCESS    *p_proc_ready;
 
