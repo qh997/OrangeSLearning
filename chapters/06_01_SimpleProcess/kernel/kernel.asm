@@ -9,6 +9,7 @@ extern  spurious_irq
 extern  kernel_main
 extern  disp_str
 extern  delay
+extern  clock_handler
 
 extern  disp_pos
 extern  gdt_ptr
@@ -146,19 +147,14 @@ csinit:
         mov    esp, StackTop
 
         sti
-
-        push   clock_int_msg
-        call   disp_str
+        push   0
+        call   clock_handler
         add    esp, 4
-
-;;        push   1
-;;        call   delay
-;;        add    esp, 4
-
         cli
 
         mov    esp, [p_proc_ready]
 
+        lldt   [esp + P_LDT_SEL]
         lea    eax, [esp + P_STACKTOP]
         mov    dword [tss + TSS3_S_SP0], eax
 
@@ -288,12 +284,10 @@ restart:
     lldt   [esp + P_LDT_SEL]             ; 加载该进程的 LDT
     lea    eax, [esp + P_STACKTOP]       ; ┓ 下一次中断发生时，esp 将变成 s_proc.regs 的末地址
     mov    dword [tss + TSS3_S_SP0], eax ; ┻ 然后再将该进程的 ss/esp/eflags/cs/eip 压栈
-
     pop    gs
     pop    fs
     pop    es
     pop    ds
     popad
     add    esp, 4
-
     iretd

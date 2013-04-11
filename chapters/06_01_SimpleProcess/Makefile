@@ -44,7 +44,8 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/protect.o \
               $(OUT_DIR)/global.o \
               $(OUT_DIR)/klib.o \
-              $(OUT_DIR)/main.o
+              $(OUT_DIR)/main.o \
+              $(OUT_DIR)/clock.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
 OBJ_BOOT := boot.bin
@@ -125,4 +126,7 @@ $(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c
 	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/main.o: $(KERNEL_PATH)/main.c $(HEADS)
+	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/clock.o: $(KERNEL_PATH)/clock.c $(HEADS)
 	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

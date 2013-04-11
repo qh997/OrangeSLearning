@@ -29,14 +29,27 @@ typedef struct s_stackframe
 typedef struct s_proc
 {
     STACK_FRAME regs;
-    u16 ldt_sel;
-    DESCRIPTOR ldts[LDT_SIZE];
-    u32 pid;
-    char p_name[16];
+    u16         ldt_sel;
+    DESCRIPTOR  ldts[LDT_SIZE];
+    u32         pid;
+    char        p_name[16];
 } PROCESS;
 
-#define NR_TASKS 1
+typedef struct s_task
+{
+    task_f initial_eip;
+    int    stacksize;
+    char   name[32];
+} TASK;
+
+#define NR_TASKS 3
 #define STACK_SIZE_TESTA 0x8000
-#define STACK_SIZE_TOTAL STACK_SIZE_TESTA
+#define STACK_SIZE_TESTB 0x8000
+#define STACK_SIZE_TESTC 0x8000
+#define STACK_SIZE_TOTAL ( \
+    STACK_SIZE_TESTA + \
+    STACK_SIZE_TESTB + \
+    STACK_SIZE_TESTC \
+)
 
 #endif

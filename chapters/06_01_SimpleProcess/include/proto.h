@@ -14,5 +14,7 @@ PUBLIC void disp_int(int input);
 PUBLIC void delay(int time);
 void restart();
 void TestA();
+void TestB();
+void TestC();
 
 #endif

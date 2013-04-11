@@ -82,6 +82,7 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate, hwint14, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate, hwint15, PRIVILEGE_KRNL);
 
+    // 填充 GDT 中的 TSS
     memset(&tss, 0, sizeof(tss));
     tss.ss0 = SELECTOR_KERNEL_DS;
     init_descriptor(
@@ -92,12 +93,20 @@ PUBLIC void init_prot()
     );
     tss.iobase = sizeof(tss);
 
-    init_descriptor(
-        &gdt[INDEX_LDT_FIRST],
-        vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[0].ldts),
-        LDT_SIZE * sizeof(DESCRIPTOR) - 1,
-        DA_LDT
-    );
+    // 填充 GDT 中进程的 LDT 的描述符
+    PROCESS *p_proc = proc_table;
+    u16 selector_ldt = INDEX_LDT_FIRST << 3;
+    for (int i = 0; i < NR_TASKS; i++)
+    {
+        init_descriptor(
+            &gdt[selector_ldt >> 3],
+            vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
+            LDT_SIZE * sizeof(DESCRIPTOR) - 1,
+            DA_LDT
+        );
+        p_proc++;
+        selector_ldt += 1 << 3;
+    }
 }
 
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type,

@@ -1,6 +1,7 @@
 
 global  memcpy
 global  memset
+global  strcpy
 
 memcpy:
     push   ebp
@@ -63,3 +64,23 @@ memset:
     pop    ebp
 
     ret; 函数结束，返回
+
+strcpy:
+    push   ebp
+    mov    ebp, esp
+
+    mov    esi, [ebp + 12]
+    mov    edi, [ebp + 8]
+
+    .1:
+        mov    al, [esi]
+        inc    esi
+        mov    byte [edi], al
+        inc    edi
+
+        cmp    al, 0
+        jnz    .1
+
+    mov    eax, [ebp + 8]
+    pop    ebp
+    ret
