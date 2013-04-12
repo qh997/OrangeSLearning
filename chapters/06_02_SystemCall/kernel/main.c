@@ -43,6 +43,11 @@ PUBLIC int kernel_main()
     }
 
     k_reenter = 0;
+    ticks = 0;
+
+    out_byte(TIMER_MODE, RATE_GENERATOR);
+    out_byte(TIMER0, (u8)(TIMER_FREQ/HZ));
+    out_byte(TIMER0, (u8)((TIMER_FREQ/HZ) >> 8));
 
     p_proc_ready = proc_table;
     put_irq_handler(CLOCK_IRQ, clock_handler);
@@ -58,11 +63,10 @@ void TestA()
 
     while(1)
     {
-        get_ticks();
         disp_str("A");
-        disp_int(i++);
+        disp_int(get_ticks());
         disp_str(".");
-        delay(1);
+        milli_delay(1000);
     }
 }
 

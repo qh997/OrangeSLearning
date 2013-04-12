@@ -37,6 +37,7 @@ void TestC();
 
 /* clock.c */
 PUBLIC void clock_handler(int irq);
+PUBLIC void milli_delay(int milli_sec);
 
 /* proc.c */
 PUBLIC int sys_get_ticks();

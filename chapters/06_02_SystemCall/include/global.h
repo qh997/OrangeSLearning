@@ -21,10 +21,12 @@ EXTERN u32        k_reenter;
 EXTERN TSS        tss;
 EXTERN PROCESS    *p_proc_ready;
 
-extern PROCESS proc_table[];
-extern char task_stack[];
-extern TASK task_table[];
+extern PROCESS     proc_table[];
+extern char        task_stack[];
+extern TASK        task_table[];
 extern irq_handler irq_table[];
 extern system_call sys_call_table[];
+
+EXTERN int ticks;
 
 #endif
