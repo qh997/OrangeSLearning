@@ -1,5 +1,5 @@
-#ifndef _CONST_H_
-#define _CONST_H_
+#ifndef _KERL__CONST_H_
+#define _KERL__CONST_H_
 
 #include "protect.h"
 
@@ -7,7 +7,7 @@
 #define PUBLIC
 #define PRIVATE static
 
-/* GDT 和 IDT 中描述符的个数 */
+/* GDT 和 IDT 中描述符数目 */
 #define GDT_SIZE 128
 #define IDT_SIZE 256
 
@@ -21,7 +21,7 @@
 #define RPL_TASK SA_RPL1
 #define RPL_USER SA_RPL3
 
-/* 8259A interrupt controller ports */
+/* 8259A ports */
 #define INT_M_CTL 0x20
 #define INT_S_CTL 0xA0
 #define INT_M_CTLMASK 0x21

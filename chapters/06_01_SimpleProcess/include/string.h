@@ -1,5 +1,5 @@
-#ifndef _STRING_H_
-#define _STRING_H_
+#ifndef _KERL__STRING_H_
+#define _KERL__STRING_H_
 
 #include "const.h"
 

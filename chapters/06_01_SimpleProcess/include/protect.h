@@ -1,5 +1,5 @@
-#ifndef _PROTECT_H_
-#define _PROTECT_H_
+#ifndef _KERL__PROTECT_H_
+#define _KERL__PROTECT_H_
 
 #include "type.h"
 
@@ -76,7 +76,7 @@ typedef struct s_tss
 #define SELECTOR_KERNEL_DS  SELECTOR_FLAT_RW
 #define SELECTOR_KERNEL_GS  SELECTOR_VIDEO
 
-#define LDT_SIZE 2
+#define LDT_SIZE 2 // LDT 数目
 
 /* 选择子类型值说明 */
 #define SA_RPL_MASK 0xFFFC
@@ -134,6 +134,7 @@ typedef struct s_tss
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
 
+/* 线性地址 → 物理地址 */
 #define vir2phys(seg_base, vir) (u32)(((u32)seg_base) + (u32)(vir))
 
 #endif

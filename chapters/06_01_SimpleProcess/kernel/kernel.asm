@@ -98,14 +98,14 @@ _start:
     call   cstart    ; ┣ 更换 GDT
     lgdt   [gdt_ptr] ; ┛
 
-    lidt   [idt_ptr]
+    lidt   [idt_ptr] ; 加载 IDT
 
     jmp    SELECTOR_KERNEL_CS:csinit ; 这个跳转指令强制使用刚刚初始化的结构
 
     csinit:
-        xor    eax, eax
-        mov    ax, SELECTOR_TSS
-        ltr    ax
+        xor    eax, eax         ; ┓
+        mov    ax, SELECTOR_TSS ; ┣ 加载 TSS
+        ltr    ax               ; ┛
 
         jmp    kernel_main
 
@@ -121,7 +121,7 @@ _start:
 
     sti
     push   %1
-    call   [irq_table + 4 * %1]
+    call   [irq_table + 4 * %1] ; ((irq_handler *)irq_table[irq])(irq)
     pop    ecx
     cli
 
@@ -129,7 +129,7 @@ _start:
     and    al, 0xFE          ; ┣ 打开时钟中断
     out    INT_M_CTLMASK, al ; ┛
 
-    ret
+    ret ; 此时将跳转至在 save 中 push 的地址（restart/restart_reenter）
 %endmacro
 %macro  hwint_slave 1
     push   %1
@@ -262,30 +262,31 @@ save:
     mov    ds, dx
     mov    es, dx
 
-    mov    eax, esp
+    mov    eax, esp ; 此时 eax 为进程表起始地址
 
     inc    dword [k_reenter]
-    cmp    dword [k_reenter], 0
+    cmp    dword [k_reenter], 0 ; 如果 k_reenter != 0，则表示中断重入
     jne    .1
-    mov    esp, StackTop       ; 切换到内核栈
+    mov    esp, StackTop ; 切换到内核栈
     push   restart
-    jmp    [eax + RETADR - P_STACKBASE]
+    jmp    [eax + RETADR - P_STACKBASE] ; 返回 hwint_master
     .1:
         push   restart_reenter
     .2:
-    jmp    [eax + RETADR - P_STACKBASE]
+    jmp    [eax + RETADR - P_STACKBASE] ; 返回 hwint_master
+    ; 由于存在栈切换并且压栈的值没有弹出，所以不能使用 ret 直接返回。
 
-restart:
+restart: ; 非中断重入
     mov    esp, [p_proc_ready]           ; 下一个要启动的进程
     lldt   [esp + P_LDT_SEL]             ; 加载该进程的 LDT
     lea    eax, [esp + P_STACKTOP]       ; ┓ 下一次中断发生时，esp 将变成 s_proc.regs 的末地址
     mov    dword [tss + TSS3_S_SP0], eax ; ┻ 然后再将该进程的 ss/esp/eflags/cs/eip 压栈
-restart_reenter:
+restart_reenter: ; 中断重入
     dec    dword [k_reenter]
-    pop    gs
-    pop    fs
-    pop    es
-    pop    ds
-    popad
+    pop    gs     ; ┓
+    pop    fs     ; ┃
+    pop    es     ; ┃
+    pop    ds     ; ┣ 恢复现场
+    popad         ; ┛
     add    esp, 4
     iretd

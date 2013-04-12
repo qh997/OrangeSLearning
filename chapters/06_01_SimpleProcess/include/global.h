@@ -1,5 +1,5 @@
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_
+#ifndef _KERL__GLOBAL_H_
+#define _KERL__GLOBAL_H_
 
 #include "type.h"
 #include "protect.h"

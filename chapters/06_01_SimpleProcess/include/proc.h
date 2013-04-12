@@ -1,5 +1,5 @@
-#ifndef _PROC_H_
-#define _PROC_H_
+#ifndef _KERL__PROC_H_
+#define _KERL__PROC_H_
 
 #include "type.h"
 #include "protect.h"
@@ -42,7 +42,10 @@ typedef struct s_task
     char   name[32];
 } TASK;
 
+/* 进程数 */
 #define NR_TASKS 3
+
+/* 进程栈 */
 #define STACK_SIZE_TESTA 0x8000
 #define STACK_SIZE_TESTB 0x8000
 #define STACK_SIZE_TESTC 0x8000

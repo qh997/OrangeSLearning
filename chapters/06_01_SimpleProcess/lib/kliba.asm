@@ -98,31 +98,31 @@ in_byte:
     ret
 
 disable_irq:
-    mov    ecx, [esp + 4]
-    pushf
-    cli
-    mov    ah, 1
-    rol    ah, cl
-    cmp    cl, 8
-    jae    disable_8
-    disable_0:
-        in     al, INT_M_CTLMASK
-        test   al, ah
-        jnz    dis_already
-        or     al, ah
-        out    INT_M_CTLMASK, al
-        popf
-        mov    eax, 1
-        ret
-    disable_8:
-        in     al, INT_S_CTLMASK
-        test   al, ah
-        jnz    dis_already
-        or     al, ah
-        out    INT_S_CTLMASK, al
-        popf
-        mov    eax, 1
-        ret
+    mov    ecx, [esp + 4]        ; ecx = irq
+    pushf                        ;
+    cli                          ; 关中断，将在 iretd 时打开
+    mov    ah, 1                 ;
+    rol    ah, cl                ; ah = 1 << (irq % 8)
+    cmp    cl, 8                 ;
+    jae    disable_8             ; if (cl < 8) // 主 8259A
+    disable_0:                   ; {
+        in     al, INT_M_CTLMASK ;
+        test   al, ah            ;     if (中断已经禁用)
+        jnz    dis_already       ;         return 0
+        or     al, ah            ;
+        out    INT_M_CTLMASK, al ;     屏蔽该中断
+        popf                     ;
+        mov    eax, 1            ;     return 1
+        ret                      ; }
+    disable_8:                   ; else { // 从 8259A
+        in     al, INT_S_CTLMASK ;
+        test   al, ah            ;     if (中断已经禁用)
+        jnz    dis_already       ;         return 0
+        or     al, ah            ;
+        out    INT_S_CTLMASK, al ;     屏蔽该中断
+        popf                     ;
+        mov    eax, 1            ;     return 1
+        ret                      ; }
     dis_already:
         popf
         xor    eax, eax

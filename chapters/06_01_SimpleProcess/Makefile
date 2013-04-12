@@ -1,6 +1,11 @@
 ASM := nasm
 CC := gcc
 LD := ld
+
+SHOW_ASMCPL := @echo 'ASM '
+SHOW_CCCPL  := @echo ' CC '
+SHOW_LDLNK  := @echo ' LD '
+
 ENTRYPOINT := 0x30400
 
 OUT_DIR := out
@@ -61,72 +66,80 @@ OBJECTS += $(OBJ_KERNEL)
 all: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
 
 init:
-	@echo qh Operating System
+	@echo QH Operating System
 	@echo
 	$(MKDIR_OUT)
 
 install: all install_boot install_loader install_kernel
 
 clean:
-	-rm -rf $(OUT_DIR)/
+	@echo clean...
+	@-rm -rf $(OUT_DIR)/
 
 install_boot: $(BOOT_BIN)
-	@echo
 	@echo Install boot
-	dd if=$^ of=$(IMG_FILE) bs=512 count=1 conv=notrunc
-	@echo
+	@$(dd if=$^ of=$(IMG_FILE) bs=512 count=1 conv=notrunc)
 
 install_loader: $(LOADER_BIN)
-	@echo
 	@echo Install loader
-	sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
-	sudo cp $^ $(IMG_MOUNT)
-	sudo umount $(IMG_MOUNT)
-	@echo
+	@sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
+	@sudo cp $^ $(IMG_MOUNT)
+	@sudo umount $(IMG_MOUNT)
 
 install_kernel: $(KERNEL_BIN)
-	@echo
 	@echo Install kernel
-	sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
-	sudo cp $^ /mnt/floppy/.
-	sudo umount /mnt/floppy
-	@echo
+	@sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
+	@sudo cp $^ /mnt/floppy/.
+	@sudo umount /mnt/floppy
 
 $(BOOT_BIN): $(BOOT_SRC) $(BOOT_HDR)
-	$(ASM) -I $(BOOT_INC)/ -o $@ $<
+	$(SHOW_ASMCPL) $@
+	@$(ASM) -I $(BOOT_INC)/ -o $@ $<
 
 $(LOADER_BIN): $(LOADER_SRC) $(LOADER_HDR)
-	$(ASM) -I $(BOOT_INC)/ -o $@ $<
+	$(SHOW_ASMCPL) $@
+	@$(ASM) -I $(BOOT_INC)/ -o $@ $<
 
 $(KERNEL_BIN): $(KERNEL_OBJ)
-	$(LD) $(KERNEL_LD_FLAG) -o $@ $^
+	$(SHOW_LDLNK) $@
+	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
 $(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm $(HEADS)
-	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+	$(SHOW_ASMCPL) $@
+	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
 $(OUT_DIR)/string.o: $(LIB_PATH)/string.asm
-	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+	$(SHOW_ASMCPL) $@
+	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
 $(OUT_DIR)/kliba.o: $(LIB_PATH)/kliba.asm
-	$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
+	$(SHOW_ASMCPL) $@
+	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
 $(OUT_DIR)/start.o: $(KERNEL_PATH)/start.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/i8259.o: $(KERNEL_PATH)/i8259.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/protect.o: $(KERNEL_PATH)/protect.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/global.o: $(KERNEL_PATH)/global.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/main.o: $(KERNEL_PATH)/main.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/clock.o: $(KERNEL_PATH)/clock.c $(HEADS)
-	$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
