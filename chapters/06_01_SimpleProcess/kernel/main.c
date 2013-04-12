@@ -19,6 +19,7 @@ PUBLIC int kernel_main()
         strcpy(p_proc->p_name, p_task->name);
         p_proc->pid = i;
         p_proc->ldt_sel = selector_ldt;
+
         memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5;
         memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
@@ -41,9 +42,11 @@ PUBLIC int kernel_main()
         selector_ldt += 1 << 3;
     }
 
-    k_reenter = -1;
+    k_reenter = 0;
 
     p_proc_ready = proc_table;
+    put_irq_handler(CLOCK_IRQ, clock_handler);
+    enable_irq(CLOCK_IRQ);
     restart();
 
     while(1){}

@@ -3,68 +3,71 @@
 
 SELECTOR_KERNEL_CS  equ  8 ; LABEL_DESC_FLAT_C  - LABEL_GDT = 8
 
-extern  cstart
-extern  exception_handler
-extern  spurious_irq
-extern  kernel_main
-extern  disp_str
-extern  delay
-extern  clock_handler
+; 导入函数
+    extern  cstart
+    extern  exception_handler
+    extern  spurious_irq
+    extern  kernel_main
+    extern  disp_str
+    extern  delay
+    extern  clock_handler
 
-extern  disp_pos
-extern  gdt_ptr
-extern  idt_ptr
-extern  p_proc_ready
-extern  tss
-extern  k_reenter
+; 导入全局变量
+    extern  disp_pos
+    extern  gdt_ptr
+    extern  idt_ptr
+    extern  p_proc_ready
+    extern  tss
+    extern  k_reenter
+    extern  irq_table
 
 BITS  32
 
 [section .data]
-clock_int_msg  db  "^", 0
+    clock_int_msg  db  "^", 0
 
 [section .bss]
-StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
-StackTop:
+    StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
+    StackTop:
 
 [section .text]
-global  _start
+    global  _start
 
-global  divide_error
-global  single_step_exception
-global  nmi
-global  breakpoint_exception
-global  overflow
-global  bounds_check
-global  inval_opcode
-global  copr_not_available
-global  double_fault
-global  copr_seg_overrun
-global  inval_tss
-global  segment_not_present
-global  stack_exception
-global  general_protection
-global  page_fault
-global  copr_error
+    global  divide_error
+    global  single_step_exception
+    global  nmi
+    global  breakpoint_exception
+    global  overflow
+    global  bounds_check
+    global  inval_opcode
+    global  copr_not_available
+    global  double_fault
+    global  copr_seg_overrun
+    global  inval_tss
+    global  segment_not_present
+    global  stack_exception
+    global  general_protection
+    global  page_fault
+    global  copr_error
 
-global  hwint00
-global  hwint01
-global  hwint02
-global  hwint03
-global  hwint04
-global  hwint05
-global  hwint06
-global  hwint07
-global  hwint08
-global  hwint09
-global  hwint10
-global  hwint11
-global  hwint12
-global  hwint13
-global  hwint14
-global  hwint15
+    global  hwint00
+    global  hwint01
+    global  hwint02
+    global  hwint03
+    global  hwint04
+    global  hwint05
+    global  hwint06
+    global  hwint07
+    global  hwint08
+    global  hwint09
+    global  hwint10
+    global  hwint11
+    global  hwint12
+    global  hwint13
+    global  hwint14
+    global  hwint15
 
-global  restart
+    global  restart
 
 ; 内存示意图
     ;           ┃             ...            ┃
@@ -99,21 +102,34 @@ _start:
 
     jmp    SELECTOR_KERNEL_CS:csinit ; 这个跳转指令强制使用刚刚初始化的结构
 
-csinit:
-;;    sti
-;;    hlt
+    csinit:
+        xor    eax, eax
+        mov    ax, SELECTOR_TSS
+        ltr    ax
 
-    xor    eax, eax
-    mov    ax, SELECTOR_TSS
-    ltr    ax
-
-    jmp    kernel_main
+        jmp    kernel_main
 
 %macro  hwint_master 1
+    call   save
+
+    in     al, INT_M_CTLMASK ; ┓
+    or     al, (1 << %1)     ; ┣ 屏蔽该中断
+    out    INT_M_CTLMASK, al ; ┛
+
+    mov    al, EOI           ; ┓
+    out    INT_M_CTL, al     ; ┻ 继续接收中断
+
+    sti
     push   %1
-    call   spurious_irq
-    add    esp, 4
-    hlt
+    call   [irq_table + 4 * %1]
+    pop    ecx
+    cli
+
+    in     al, INT_M_CTLMASK ; ┓
+    and    al, 0xFE          ; ┣ 打开时钟中断
+    out    INT_M_CTLMASK, al ; ┛
+
+    ret
 %endmacro
 %macro  hwint_slave 1
     push   %1
@@ -124,50 +140,7 @@ csinit:
 ; 硬件中断
     ALIGN  16
     hwint00:            ; <clock>
-        sub    esp, 4 ; 此时 ss/esp/eflags/cs/eip 已经压栈
-        pushad        ; ┓
-        push   ds     ; ┃
-        push   es     ; ┣ 保护现场
-        push   fs     ; ┃
-        push   gs     ; ┛
-
-        mov    dx, ss
-        mov    ds, dx
-        mov    es, dx
-
-        inc    byte [gs:(39 * 2)]
-
-        mov    al, EOI
-        out    INT_M_CTL, al
-
-        inc    dword [k_reenter]
-        cmp    dword [k_reenter], 0
-        jne    .re_enter
-
-        mov    esp, StackTop
-
-        sti
-        push   0
-        call   clock_handler
-        add    esp, 4
-        cli
-
-        mov    esp, [p_proc_ready]
-
-        lldt   [esp + P_LDT_SEL]
-        lea    eax, [esp + P_STACKTOP]
-        mov    dword [tss + TSS3_S_SP0], eax
-
-        .re_enter:
-            dec    dword [k_reenter]
-        pop    gs     ; ┓
-        pop    fs     ; ┃
-        pop    es     ; ┣ 恢复现场
-        pop    ds     ; ┃
-        popad         ; ┛
-        add    esp, 4 ; 跳过 retaddr
-
-        iretd
+        hwint_master  0
     ALIGN  16
     hwint01:            ; <keyboard>
         hwint_master  1
@@ -279,11 +252,36 @@ csinit:
         add    esp, 4 * 2
         hlt
 
+save:
+    pushad        ; ┓
+    push   ds     ; ┃
+    push   es     ; ┣ 保护现场
+    push   fs     ; ┃
+    push   gs     ; ┛
+    mov    dx, ss
+    mov    ds, dx
+    mov    es, dx
+
+    mov    eax, esp
+
+    inc    dword [k_reenter]
+    cmp    dword [k_reenter], 0
+    jne    .1
+    mov    esp, StackTop       ; 切换到内核栈
+    push   restart
+    jmp    [eax + RETADR - P_STACKBASE]
+    .1:
+        push   restart_reenter
+    .2:
+    jmp    [eax + RETADR - P_STACKBASE]
+
 restart:
     mov    esp, [p_proc_ready]           ; 下一个要启动的进程
     lldt   [esp + P_LDT_SEL]             ; 加载该进程的 LDT
     lea    eax, [esp + P_STACKTOP]       ; ┓ 下一次中断发生时，esp 将变成 s_proc.regs 的末地址
     mov    dword [tss + TSS3_S_SP0], eax ; ┻ 然后再将该进程的 ss/esp/eflags/cs/eip 压栈
+restart_reenter:
+    dec    dword [k_reenter]
     pop    gs
     pop    fs
     pop    es

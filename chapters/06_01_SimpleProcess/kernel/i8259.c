@@ -2,6 +2,7 @@
 #include "proto.h"
 #include "const.h"
 #include "protect.h"
+#include "global.h"
 
 PUBLIC void init_8259A()
 {
@@ -13,8 +14,11 @@ PUBLIC void init_8259A()
     out_byte(INT_S_CTLMASK, 0x02);            // 从8259, ICW3
     out_byte(INT_M_CTLMASK, 0x01);            // 主8259, ICW4
     out_byte(INT_S_CTLMASK, 0x01);            // 从8259, ICW4
-    out_byte(INT_M_CTLMASK, 0xFE);            // 主8259, OCW1
+    out_byte(INT_M_CTLMASK, 0xFF);            // 主8259, OCW1
     out_byte(INT_S_CTLMASK, 0xFF);            // 从8259, OCW1
+
+    for (int i = 0; i < NR_IRQ; i++)
+        irq_table[i] = spurious_irq;
 }
 
 PUBLIC void spurious_irq(int irq)
@@ -22,4 +26,10 @@ PUBLIC void spurious_irq(int irq)
     disp_str("spurious_irq: ");
     disp_int(irq);
     disp_str("\n");
+}
+
+PUBLIC void put_irq_handler(int irq, irq_handler handler)
+{
+    disable_irq(irq);
+    irq_table[irq] = handler;
 }
