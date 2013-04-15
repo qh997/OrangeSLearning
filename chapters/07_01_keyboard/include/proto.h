@@ -11,6 +11,8 @@ PUBLIC void out_byte(u16 port, u8 value);
 PUBLIC u8 in_byte(u16 port);
 PUBLIC int disable_irq(int irq);
 PUBLIC void enable_irq(int irq);
+PUBLIC void disable_int();
+PUBLIC void enable_int();
 
 /* klib.c */
 PUBLIC char *itoa(char *str, int num);
@@ -46,7 +48,11 @@ PUBLIC int sys_get_ticks();
 /* syscall.asm */
 PUBLIC int get_ticks();
 
-/* clock.c */
+/* keyboard.c */
 PUBLIC void init_keyboard();
+PUBLIC void keyboard_read();
+
+/* tty.c */
+PUBLIC void task_tty();
 
 #endif

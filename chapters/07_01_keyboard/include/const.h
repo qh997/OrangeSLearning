@@ -33,6 +33,10 @@
 #define TIMER_FREQ     1193182L
 #define HZ             100
 
+/* AT keyboard */
+#define KB_DATA 0x60
+#define KB_CMD  0x64
+
 /* Hardware interrupts */
 #define NR_IRQ 16
 #define CLOCK_IRQ    0

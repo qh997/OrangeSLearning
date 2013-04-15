@@ -47,13 +47,16 @@ typedef struct s_task
 } TASK;
 
 /* 进程数 */
-#define NR_TASKS 3
+#define NR_TASKS 4
 
 /* 进程栈 */
+#define STACK_SIZE_TTY   0x8000
+#define STACK_SIZE_TESTA 0x8000
 #define STACK_SIZE_TESTA 0x8000
 #define STACK_SIZE_TESTB 0x8000
 #define STACK_SIZE_TESTC 0x8000
 #define STACK_SIZE_TOTAL ( \
+    STACK_SIZE_TTY + \
     STACK_SIZE_TESTA + \
     STACK_SIZE_TESTB + \
     STACK_SIZE_TESTC \

@@ -10,6 +10,8 @@ global  out_byte
 global  in_byte
 global  disable_irq
 global  enable_irq
+global  disable_int
+global  enable_int
 
 disp_str:
     push   ebp
@@ -148,3 +150,11 @@ enable_irq:
         out    INT_S_CTLMASK, al
         popf
         ret
+
+disable_int:
+    cli
+    ret
+
+enable_int:
+    sti
+    ret

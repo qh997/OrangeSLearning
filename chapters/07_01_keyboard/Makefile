@@ -53,7 +53,8 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/clock.o \
               $(OUT_DIR)/proc.o \
               $(OUT_DIR)/syscall.o \
-              $(OUT_DIR)/keyboard.o
+              $(OUT_DIR)/keyboard.o \
+              $(OUT_DIR)/tty.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
 OBJ_BOOT := boot.bin
@@ -156,5 +157,9 @@ $(OUT_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm $(HEADS)
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
 $(OUT_DIR)/keyboard.o: $(KERNEL_PATH)/keyboard.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/tty.o: $(KERNEL_PATH)/tty.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
