@@ -18,6 +18,8 @@ PRIVATE int num_lock;    /* Num Lock      */
 PRIVATE int scroll_lock; /* Scroll Lock   */
 PRIVATE int column;
 
+PRIVATE u8 get_byte_from_kbuf();
+
 PUBLIC void keyboard_handler(int irq)
 {
     u8 scan_code = in_byte(KB_DATA);
@@ -51,34 +53,67 @@ PUBLIC void init_keyboard()
 PUBLIC void keyboard_read()
 {
     u8 scan_code;
-    char output[2];
     int make;
     u32 key = 0;
     u32 *keyrow;
 
     if (kb_in.count > 0)
     {
-        disable_int();
-        scan_code = *(kb_in.p_tail);
-        kb_in.p_tail++;
-        if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES)
-        {
-            kb_in.p_tail = kb_in.buf;
-        }
-        kb_in.count--;
-        enable_int();
-
-        disp_int(scan_code);
+        scan_code = get_byte_from_kbuf();
 
         if (scan_code == 0xE1)
         {
-
+            int i;
+            u8 pausebrk_scode[] = {0xE1, 0x1D, 0x45,
+                                   0xE1, 0x9D, 0xC5};
+            int is_pausebreak = 1;
+            for (i = 1; i < 6; i++)
+            {
+                if (get_byte_from_kbuf() != pausebrk_scode[i])
+                {
+                    is_pausebreak = 0;
+                    break;
+                }
+            }
+            if (is_pausebreak)
+            {
+                key = PAUSEBREAK;
+            }
         }
         else if(scan_code == 0xE0)
         {
-            code_with_E0 = 1;
+            scan_code = get_byte_from_kbuf();
+
+            if (scan_code == 0x2A)
+            {
+                if (get_byte_from_kbuf() == 0xE0)
+                {
+                    if (get_byte_from_kbuf() == 0x37)
+                    {
+                        key = PRINTSCREEN;
+                        make = 1;
+                    }
+                }
+            }
+
+            if (scan_code == 0xB7)
+            {
+                if (get_byte_from_kbuf() == 0xE0)
+                {
+                    if (get_byte_from_kbuf() == 0xAA)
+                    {
+                        key = PRINTSCREEN;
+                        make = 0;
+                    }
+                }
+            }
+
+            if (key == 0)
+            {
+                code_with_E0 = 1;
+            }
         }
-        else
+        if ((key != PAUSEBREAK) && (key != PRINTSCREEN))
         {
             make = (scan_code & FLAG_BREAK ? FALSE : TRUE);
             keyrow = &keymap[(scan_code & 0x7F) * MAP_COLS];
@@ -129,11 +164,36 @@ PUBLIC void keyboard_read()
                     break;
             }
 
-            if (key)
+            if (make)
             {
-                output[0] = key;
-                disp_str(output);
+                key |= shift_l ? FLAG_SHIFT_L : 0;
+                key |= shift_r ? FLAG_SHIFT_R : 0;
+                key |= ctrl_l  ? FLAG_CTRL_L  : 0;
+                key |= ctrl_r  ? FLAG_CTRL_R  : 0;
+                key |= alt_l   ? FLAG_ALT_L   : 0;
+                key |= alt_r   ? FLAG_ALT_R   : 0;
+
+                in_process(key);
             }
         }
     }
+}
+
+PRIVATE u8 get_byte_from_kbuf()
+{
+    u8 scan_code;
+
+    while (kb_in.count <= 0);
+
+    disable_int();
+    scan_code = *(kb_in.p_tail);
+    kb_in.p_tail++;
+    if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES)
+    {
+        kb_in.p_tail = kb_in.buf;
+    }
+    kb_in.count--;
+    enable_int();
+
+    return scan_code;
 }

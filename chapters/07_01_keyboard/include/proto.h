@@ -54,5 +54,6 @@ PUBLIC void keyboard_read();
 
 /* tty.c */
 PUBLIC void task_tty();
+PUBLIC void in_process(u32 key);
 
 #endif
