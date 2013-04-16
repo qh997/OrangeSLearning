@@ -9,17 +9,12 @@ PUBLIC char *itoa(char *str, int num)
     *p++ = 'x';
 
     if (num == 0)
-    {
         *p++ = '0';
-    }
-    else
-    {
+    else {
         int flag = 0;
-        for (int i = 28; i >= 0 ; i -= 4)
-        {
+        for (int i = 28; i >= 0 ; i -= 4) {
             char ch = (num >> i) & 0xF;
-            if (flag || (ch > 0))
-            {
+            if (flag || (ch > 0)) {
                 flag = 1;
                 ch += '0';
                 if (ch > '9')

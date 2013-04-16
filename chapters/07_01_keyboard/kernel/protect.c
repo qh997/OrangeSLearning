@@ -100,8 +100,7 @@ PUBLIC void init_prot()
     // 填充 GDT 中进程的 LDT 的描述符
     PROCESS *p_proc = proc_table;
     u16 selector_ldt = INDEX_LDT_FIRST << 3;
-    for (int i = 0; i < NR_TASKS; i++)
-    {
+    for (int i = 0; i < NR_TASKS; i++) {
         init_descriptor(
             &gdt[selector_ldt >> 3],
             vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
@@ -183,7 +182,7 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
     disp_color_str("EIP:", text_color);
     disp_int(eip);
 
-    if(err_code != 0xFFFFFFFF){
+    if (err_code != 0xFFFFFFFF) {
         disp_color_str("Error code:", text_color);
         disp_int(err_code);
     }

@@ -41,8 +41,10 @@
 #define HZ             100      /* clock freq (software settable on IBM-PC) */
 
 /* AT keyboard */
-#define KB_DATA 0x60
-#define KB_CMD  0x64
+#define KB_DATA  0x60
+#define KB_CMD   0x64
+#define LED_CODE 0xED
+#define KB_ACK   0xFA
 
 /* VGA */
 #define CRTC_ADDR_REG 0x3D4   /* CRT Controller Registers - Addr Register */

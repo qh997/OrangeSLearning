@@ -14,8 +14,7 @@ PUBLIC int kernel_main()
     char *p_task_stack = task_stack + STACK_SIZE_TOTAL;
     u16 selector_ldt = SELECTOR_LDT_FIRST;
 
-    for (int i = 0; i < NR_TASKS; i++)
-    {
+    for (int i = 0; i < NR_TASKS; i++) {
         strcpy(p_proc->p_name, p_task->name);
         p_proc->pid = i;
         p_proc->ldt_sel = selector_ldt;
@@ -60,8 +59,7 @@ PUBLIC int kernel_main()
 
 void TestA()
 {
-    while(1)
-    {
+    while(1) {
         //disp_str("A.");
         milli_delay(10);
     }
@@ -69,8 +67,7 @@ void TestA()
 
 void TestB()
 {
-    while(1)
-    {
+    while(1) {
         //disp_str("B.");
         milli_delay(10);
     }
@@ -78,8 +75,7 @@ void TestB()
 
 void TestC()
 {
-    while(1)
-    {
+    while(1) {
         //disp_str("C.");
         milli_delay(10);
     }

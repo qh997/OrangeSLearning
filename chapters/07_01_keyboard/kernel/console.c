@@ -4,6 +4,7 @@
 #include "proto.h"
 
 PRIVATE void set_cursor(unsigned int position);
+PRIVATE void flush(CONSOLE *p_con);
 
 PUBLIC void init_screen(TTY *p_tty)
 {
@@ -19,13 +20,11 @@ PUBLIC void init_screen(TTY *p_tty)
 
     p_tty->p_console->cursor = p_tty->p_console->original_addr;
 
-    if (nr_tty == 0)
-    {
+    if (nr_tty == 0) {
         p_tty->p_console->cursor = disp_pos / 2;
         disp_pos = 0;
     }
-    else
-    {
+    else {
         out_char(p_tty->p_console, nr_tty + '0');
         out_char(p_tty->p_console, '#');
     }
@@ -42,11 +41,37 @@ PUBLIC void out_char(CONSOLE *p_con, char ch)
 {
     u8 *p_vmem = (u8 *)(V_MEM_BASE + p_con->cursor * 2);
 
-    *p_vmem++ = ch;
-    *p_vmem++ = DEFAULT_CHAR_COLOR;
-    p_con->cursor++;
+    switch (ch) {
+        case '\n':
+            if (p_con->cursor < p_con->original_addr
+                              + p_con->v_mem_limit
+                              - SCREEN_WIDTH) {
+                p_con->cursor = p_con->original_addr + SCREEN_WIDTH
+                              * ((p_con->cursor - p_con->original_addr)
+                                 / SCREEN_WIDTH + 1);
+            }
+            break;
+        case '\b':
+            if (p_con->cursor > p_con->original_addr) {
+                p_con->cursor--;
+                *(p_vmem - 2) = ' ';
+                *(p_vmem - 1) = DEFAULT_CHAR_COLOR;
+            }
+            break;
+        default:
+            if (p_con->cursor < p_con->original_addr
+                              + p_con->v_mem_limit - 1) {
+                *p_vmem++ = ch;
+                *p_vmem++ = DEFAULT_CHAR_COLOR;
+                p_con->cursor++;
+            }
+            break;
+    }
 
-    set_cursor(p_con->cursor);
+    while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE)
+        scroll_screen(p_con, SCR_DN);
+
+    flush(p_con);
 }
 
 PRIVATE void set_cursor(unsigned int position)
@@ -76,31 +101,28 @@ PUBLIC void select_console(int nr_console)
 
     nr_current_console = nr_console;
 
-    set_cursor(console_table[nr_console].cursor);
-    set_vedio_start_addr(console_table[nr_console].current_start_addr);
+    flush(&console_table[nr_console]);
 }
 
 PUBLIC void scroll_screen(CONSOLE *p_con, int direction)
 {
-    if (direction == SCR_UP)
-    {
+    if (direction == SCR_UP) {
         if (p_con->current_start_addr > p_con->original_addr)
-        {
             p_con->current_start_addr -= SCREEN_WIDTH;
-        }
     }
-    else if (direction == SCR_DN)
-    {
-        if (p_con->current_start_addr + SCREEN_SIZE <
-            p_con->original_addr + p_con->v_mem_limit)
-        {
+    else if (direction == SCR_DN) {
+        if (p_con->current_start_addr + SCREEN_SIZE
+            < p_con->original_addr + p_con->v_mem_limit)
             p_con->current_start_addr += SCREEN_WIDTH;
-        }
     }
-    else
-    {
+    else {
     }
 
-    set_vedio_start_addr(p_con->current_start_addr);
+    flush(p_con);
+}
+
+PRIVATE void flush(CONSOLE *p_con)
+{
     set_cursor(p_con->cursor);
+    set_vedio_start_addr(p_con->current_start_addr);
 }
