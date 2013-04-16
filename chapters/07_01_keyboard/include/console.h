@@ -3,8 +3,6 @@
 
 #include "const.h"
 
-#define DEFAULT_CHAR_COLOR 0x07
-
 typedef struct s_console
 {
     unsigned int current_start_addr;
@@ -13,7 +11,12 @@ typedef struct s_console
     unsigned int cursor;
 } CONSOLE;
 
-PUBLIC int is_current_console(CONSOLE *p_con);
-PUBLIC void out_char(CONSOLE *p_con, char ch);
+#define DEFAULT_CHAR_COLOR 0x07
+
+#define SCR_UP 1
+#define SCR_DN -1
+
+#define SCREEN_SIZE  (80 * 25)
+#define SCREEN_WIDTH 80
 
 #endif
