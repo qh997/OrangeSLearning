@@ -1,9 +1,12 @@
 #ifndef _KERL__GLOBAL_H_
 #define _KERL__GLOBAL_H_
 
+#include "const.h"
 #include "type.h"
 #include "protect.h"
 #include "proc.h"
+#include "tty.h"
+#include "console.h"
 
 #ifdef GLOBAL_VARIABLES_HERE
 #undef  EXTERN
@@ -28,5 +31,9 @@ extern irq_handler irq_table[];
 extern system_call sys_call_table[];
 
 EXTERN int ticks;
+
+EXTERN int nr_current_console;
+extern TTY     tty_table[];
+extern CONSOLE console_table[];
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "const.h"
 #include "type.h"
+#include "tty.h"
 
 /* kliba.asm */
 PUBLIC void disp_str(char *info);
@@ -54,6 +55,6 @@ PUBLIC void keyboard_read();
 
 /* tty.c */
 PUBLIC void task_tty();
-PUBLIC void in_process(u32 key);
+PUBLIC void in_process(TTY *p_tty, u32 key);
 
 #endif

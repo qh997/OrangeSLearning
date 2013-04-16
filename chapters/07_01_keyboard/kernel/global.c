@@ -1,11 +1,8 @@
 #define GLOBAL_VARIABLES_HERE
 
-#include "type.h"
 #include "const.h"
-#include "protect.h"
-#include "proto.h"
 #include "global.h"
-#include "proc.h"
+#include "proto.h"
 
 /* 进程表 */
 PUBLIC PROCESS proc_table[NR_TASKS];
@@ -20,6 +17,10 @@ PUBLIC TASK task_table[NR_TASKS] = {
     {TestB, STACK_SIZE_TESTB, "TestB"},
     {TestC, STACK_SIZE_TESTC, "TestC"},
 };
+
+/* tty */
+PUBLIC TTY     tty_table[NR_CONSOLES];
+PUBLIC CONSOLE console_table[NR_CONSOLES];
 
 /* 中断向量 */
 PUBLIC irq_handler irq_table[NR_IRQ];

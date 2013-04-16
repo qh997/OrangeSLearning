@@ -54,7 +54,8 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/proc.o \
               $(OUT_DIR)/syscall.o \
               $(OUT_DIR)/keyboard.o \
-              $(OUT_DIR)/tty.o
+              $(OUT_DIR)/tty.o \
+              $(OUT_DIR)/console.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
 OBJ_BOOT := boot.bin
@@ -65,19 +66,22 @@ OBJECTS += $(OBJ_BOOT)
 OBJECTS += $(OBJ_LOADER)
 OBJECTS += $(OBJ_KERNEL)
 
-.PHONY: all init clean install install_boot install_loader install_kernel
+.PHONY: everytning all init clean install install_boot install_loader install_kernel
 
-all: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
+everytning: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
+
+all: clean everytning install
 
 init:
 	@echo QH Operating System
 	@echo
 	$(MKDIR_OUT)
 
-install: all install_boot install_loader install_kernel
+install: install_boot install_loader install_kernel
 
 clean:
 	@echo clean...
+	@echo
 	@-rm -rf $(OUT_DIR)/
 
 install_boot: $(BOOT_BIN)
@@ -161,5 +165,9 @@ $(OUT_DIR)/keyboard.o: $(KERNEL_PATH)/keyboard.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/tty.o: $(KERNEL_PATH)/tty.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/console.o: $(KERNEL_PATH)/console.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

@@ -3,6 +3,7 @@
 #include "proto.h"
 #include "keyboard.h"
 #include "keymap.h"
+#include "tty.h"
 
 PRIVATE KB_INPUT kb_in;
 
@@ -50,7 +51,7 @@ PUBLIC void init_keyboard()
     enable_irq(KEYBOARD_IRQ);
 }
 
-PUBLIC void keyboard_read()
+PUBLIC void keyboard_read(TTY *p_tty)
 {
     u8 scan_code;
     int make;
@@ -134,33 +135,23 @@ PUBLIC void keyboard_read()
             {
                 case SHIFT_L:
                     shift_l = make;
-                    key = 0;
                     break;
                 case SHIFT_R:
                     shift_r = make;
-                    key = 0;
                     break;
                 case CTRL_L:
                     ctrl_l = make;
-                    key = 0;
                     break;
                 case CTRL_R:
                     ctrl_r = make;
-                    key = 0;
                     break;
                 case ALT_L:
                     alt_l = make;
-                    key = 0;
                     break;
                 case ALT_R:
                     alt_r = make;
-                    key = 0;
                     break;
                 default:
-                    if (!make)
-                    {
-                        key = 0;
-                    }
                     break;
             }
 
@@ -173,7 +164,7 @@ PUBLIC void keyboard_read()
                 key |= alt_l   ? FLAG_ALT_L   : 0;
                 key |= alt_r   ? FLAG_ALT_R   : 0;
 
-                in_process(key);
+                in_process(p_tty, key);
             }
         }
     }
