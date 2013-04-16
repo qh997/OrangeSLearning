@@ -4,6 +4,8 @@
 #include "protect.h"
 #include "global.h"
 
+PRIVATE void spurious_irq(int irq);
+
 PUBLIC void init_8259A()
 {
     out_byte(INT_M_CTL, 0x11);                // 主8259, ICW1
@@ -17,11 +19,12 @@ PUBLIC void init_8259A()
     out_byte(INT_M_CTLMASK, 0xFF);            // 主8259, OCW1
     out_byte(INT_S_CTLMASK, 0xFF);            // 从8259, OCW1
 
+    /* 初始化中断向量表 */
     for (int i = 0; i < NR_IRQ; i++)
         irq_table[i] = spurious_irq;
 }
 
-PUBLIC void spurious_irq(int irq)
+PRIVATE void spurious_irq(int irq)
 {
     disp_str("spurious_irq: ");
     disp_int(irq);

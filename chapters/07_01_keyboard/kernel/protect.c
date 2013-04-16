@@ -50,6 +50,7 @@ PUBLIC void init_prot()
 {
     init_8259A();
 
+    /* 异常 */
     init_idt_desc(INT_VECTOR_DIVIDE,       DA_386IGate, divide_error,          PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_DEBUG,        DA_386IGate, single_step_exception, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_NMI,          DA_386IGate, nmi,                   PRIVILEGE_KRNL);
@@ -67,6 +68,7 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_PAGE_FAULT,   DA_386IGate, page_fault,            PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_COPROC_ERR,   DA_386IGate, copr_error,            PRIVILEGE_KRNL);
 
+    /* 8259A 中断 */
     init_idt_desc(INT_VECTOR_IRQ0 + 0, DA_386IGate, hwint00, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ0 + 1, DA_386IGate, hwint01, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ0 + 2, DA_386IGate, hwint02, PRIVILEGE_KRNL);
@@ -84,20 +86,23 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate, hwint14, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate, hwint15, PRIVILEGE_KRNL);
 
+    /* 系统调用 */
     init_idt_desc(INT_VECTOR_SYS_CALL, DA_386IGate, sys_call, PRIVILEGE_USER);
 
-    // 填充 GDT 中的 TSS
+    /* 初始化 TSS */
     memset(&tss, 0, sizeof(tss));
     tss.ss0 = SELECTOR_KERNEL_DS;
+    tss.iobase = sizeof(tss);
+
+    /* 填充 GDT 中的 TSS */
     init_descriptor(
         &gdt[INDEX_TSS],
         vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss),
         sizeof(tss) - 1,
         DA_386TSS
     );
-    tss.iobase = sizeof(tss);
 
-    // 填充 GDT 中进程的 LDT 的描述符
+    /* 填充 GDT 中进程的 LDT 的描述符 */
     PROCESS *p_proc = proc_table;
     u16 selector_ldt = INDEX_LDT_FIRST << 3;
     for (int i = 0; i < NR_TASKS; i++) {
