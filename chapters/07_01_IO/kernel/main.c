@@ -9,21 +9,22 @@ PUBLIC int kernel_main()
 {
     disp_str("-----\"kernel_main\" begins-----\n");
 
-    TASK *p_task = task_table;
     PROCESS *p_proc = proc_table;
+    TASK *p_task = task_table;
     char *p_task_stack = task_stack + STACK_SIZE_TOTAL;
     u16 selector_ldt = SELECTOR_LDT_FIRST;
 
+    /* 初始化进程表 */
     for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
         u8 privilege, rpl;
         int eflags;
-        if (i < NR_TASKS) {
+        if (i < NR_TASKS) { // 系统任务
             p_task = task_table + i;
             privilege = PRIVILEGE_TASK;
             rpl = RPL_TASK;
             eflags = 0x1202;
         }
-        else {
+        else { // 用户进程
             p_task = user_proc_table + (i - NR_TASKS);
             privilege = PRIVILEGE_USER;
             rpl = RPL_USER;
@@ -39,11 +40,16 @@ PUBLIC int kernel_main()
         memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 
+        /* 代码段指向第一个 IDT */
         p_proc->regs.cs = ((0 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
+
+        /* 其他段指向第二个 IDT */
         p_proc->regs.ds = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.es = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.fs = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.ss = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
+
+        /* gs 不变 */
         p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;
 
         p_proc->regs.eip= (u32)p_task->initial_eip;
@@ -55,7 +61,7 @@ PUBLIC int kernel_main()
         p_task_stack -= p_task->stacksize;
         p_proc++;
         p_task++;
-        selector_ldt += 1 << 3;
+        selector_ldt += 1 << 3; // selector_ldt += 8
     }
 
     proc_table[0].priority = proc_table[0].ticks = 15;
@@ -65,7 +71,7 @@ PUBLIC int kernel_main()
 
     proc_table[1].nr_tty = 0;
     proc_table[2].nr_tty = 1;
-    proc_table[3].nr_tty = 2;
+    proc_table[3].nr_tty = 1;
 
     k_reenter = 0;
     ticks = 0;

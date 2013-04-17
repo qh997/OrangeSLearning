@@ -21,13 +21,14 @@ EXTERN u8         idt_ptr[6];
 
 EXTERN u32 k_reenter;
 
-EXTERN TSS     tss;
+EXTERN TSS tss;
 
 EXTERN PROCESS     *p_proc_ready;
 extern PROCESS     proc_table[];
-extern char        task_stack[];
 extern TASK        task_table[];
 extern TASK        user_proc_table[];
+extern char        task_stack[];
+
 extern irq_handler irq_table[];
 extern system_call sys_call_table[];
 

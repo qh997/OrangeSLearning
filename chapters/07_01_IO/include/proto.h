@@ -24,6 +24,7 @@ PUBLIC void delay(int time);
 /* protect.c */
 PUBLIC void init_prot();
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags);
+PUBLIC u32 seg2phys(u16 seg);
 
 /* i8259.c*/
 PUBLIC void init_8259A();
