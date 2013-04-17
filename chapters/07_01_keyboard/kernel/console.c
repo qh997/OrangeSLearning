@@ -22,7 +22,7 @@ PUBLIC void init_screen(TTY *p_tty)
 
     if (nr_tty == 0) {
         p_tty->p_console->cursor = disp_pos / 2;
-        disp_pos = 0;
+        //disp_pos = 0;
     }
     else {
         out_char(p_tty->p_console, nr_tty + '0');
@@ -123,6 +123,8 @@ PUBLIC void scroll_screen(CONSOLE *p_con, int direction)
 
 PRIVATE void flush(CONSOLE *p_con)
 {
-    set_cursor(p_con->cursor);
-    set_vedio_start_addr(p_con->current_start_addr);
+    if (is_current_console(p_con)) {
+        set_cursor(p_con->cursor);
+        set_vedio_start_addr(p_con->current_start_addr);
+    }
 }

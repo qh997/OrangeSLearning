@@ -4,6 +4,7 @@
 #include "const.h"
 #include "type.h"
 #include "tty.h"
+#include "proc.h"
 
 /* kliba.asm */
 PUBLIC void disp_str(char *info);
@@ -47,6 +48,7 @@ PUBLIC int sys_get_ticks();
 
 /* syscall.asm */
 PUBLIC int get_ticks();
+PUBLIC int write(char *buf, int len);
 
 /* keyboard.c */
 PUBLIC void init_keyboard();
@@ -55,12 +57,19 @@ PUBLIC void keyboard_read();
 /* tty.c */
 PUBLIC void task_tty();
 PUBLIC void in_process(TTY *p_tty, u32 key);
+PUBLIC int sys_write(char *buf, int len, PROCESS *p_proc);
 
-/* console.h */
+/* console.c */
 PUBLIC void init_screen(TTY *p_tty);
 PUBLIC int is_current_console(CONSOLE *p_con);
 PUBLIC void out_char(CONSOLE *p_con, char ch);
 PUBLIC void select_console(int nr_console);
 PUBLIC void scroll_screen(CONSOLE *p_con, int direction);
+
+/* vsprintf.c */
+PUBLIC int vsprintf(char *buf, const char *fmt, va_list args);
+
+/* printf.c */
+PUBLIC int printf(const char *fmt, ...);
 
 #endif

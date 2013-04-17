@@ -4,6 +4,7 @@
 #include "global.h"
 #include "tty.h"
 #include "console.h"
+#include "proc.h"
 
 #define TTY_FIRST (tty_table)
 #define TTY_END   (tty_table + NR_CONSOLES)
@@ -113,4 +114,22 @@ PRIVATE void put_key(TTY *p_tty, u32 key)
             p_tty->p_inbuf_head = p_tty->in_buf;
         p_tty->inbuf_count++;
     }
+}
+
+PUBLIC void tty_write(TTY *p_tty, char *buf, int len)
+{
+    char *p = buf;
+    int i = len;
+
+    while (i) {
+        out_char(p_tty->p_console, *p++);
+        i--;
+    }
+}
+
+PUBLIC int sys_write(char *buf, int len, PROCESS *p_proc)
+{
+    tty_write(&tty_table[p_proc->nr_tty], buf, len);
+
+    return 0;
 }

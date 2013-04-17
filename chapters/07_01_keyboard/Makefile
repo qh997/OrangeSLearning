@@ -55,7 +55,9 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/syscall.o \
               $(OUT_DIR)/keyboard.o \
               $(OUT_DIR)/tty.o \
-              $(OUT_DIR)/console.o
+              $(OUT_DIR)/console.o \
+              $(OUT_DIR)/vsprintf.o \
+              $(OUT_DIR)/printf.o
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 
 OBJ_BOOT := boot.bin
@@ -169,5 +171,13 @@ $(OUT_DIR)/tty.o: $(KERNEL_PATH)/tty.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/console.o: $(KERNEL_PATH)/console.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/vsprintf.o: $(KERNEL_PATH)/vsprintf.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

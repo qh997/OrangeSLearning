@@ -36,8 +36,9 @@
 /* 8253/8254 PIT */
 #define TIMER0         0x40     /* I/O port for timer channel 0 */
 #define TIMER_MODE     0x43     /* I/O port for timer mode control */
-#define RATE_GENERATOR 0x34
-#define TIMER_FREQ     1193182L /* clock frequency for timer in PC and AT */
+#define RATE_GENERATOR 0x34     /*    00    -    11    -    010   -  0  */
+                                /* Counter0 - L then H - rate gen - bin */
+#define TIMER_FREQ     1193181L /* clock frequency for timer in PC and AT */
 #define HZ             100      /* clock freq (software settable on IBM-PC) */
 
 /* AT keyboard */
@@ -61,7 +62,7 @@
 #define CLOCK_IRQ    0
 #define KEYBOARD_IRQ 1
 
-#define NR_SYS_CALL 1
+#define NR_SYS_CALL 2
 
 #define enable_interrupt() __asm__("sti")
 #define disable_interrupt() __asm__("cli")
