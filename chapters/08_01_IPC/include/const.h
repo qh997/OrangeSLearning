@@ -96,7 +96,7 @@
 #define NO_TASK (NR_TASKS + NR_PROCS + 20)
 
 /* system call */
-#define NR_SYS_CALL 4
+#define NR_SYS_CALL 2
 
 /* ipc */
 #define SEND    1

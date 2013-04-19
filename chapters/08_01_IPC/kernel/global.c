@@ -34,6 +34,4 @@ PUBLIC irq_handler irq_table[NR_IRQ];
 PUBLIC system_call sys_call_table[NR_SYS_CALL] = {
     sys_printx,
     sys_sendrec,
-    sys_get_ticks,
-    sys_write,
 };

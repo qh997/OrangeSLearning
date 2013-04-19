@@ -32,14 +32,6 @@ PUBLIC void task_tty()
         }
 }
 
-PRIVATE void init_tty(TTY *p_tty)
-{
-    p_tty->inbuf_count = 0;
-    p_tty->p_inbuf_head = p_tty->p_inbuf_tail = p_tty->in_buf;
-
-    init_screen(p_tty);
-}
-
 PUBLIC void in_process(TTY *p_tty, u32 key)
 {
     char output[2] = {'\0', '\0'};
@@ -86,54 +78,6 @@ PUBLIC void in_process(TTY *p_tty, u32 key)
     }
 }
 
-PRIVATE void tty_do_read(TTY *p_tty)
-{
-    if (is_current_console(p_tty->p_console))
-        keyboard_read(p_tty);
-}
-
-PRIVATE void tty_do_write(TTY *p_tty)
-{
-    if (p_tty->inbuf_count) {
-        char ch = *(p_tty->p_inbuf_tail);
-        p_tty->p_inbuf_tail++;
-        if (p_tty->p_inbuf_tail == p_tty->in_buf + TTY_IN_BYTES)
-            p_tty->p_inbuf_tail = p_tty->in_buf;
-        p_tty->inbuf_count--;
-
-        out_char(p_tty->p_console, ch);
-    }
-}
-
-PRIVATE void put_key(TTY *p_tty, u32 key)
-{
-    if (p_tty->inbuf_count < TTY_IN_BYTES) {
-        *(p_tty->p_inbuf_head) = key;
-        p_tty->p_inbuf_head++;
-        if (p_tty->p_inbuf_head == p_tty->in_buf + TTY_IN_BYTES)
-            p_tty->p_inbuf_head = p_tty->in_buf;
-        p_tty->inbuf_count++;
-    }
-}
-
-PUBLIC void tty_write(TTY *p_tty, char *buf, int len)
-{
-    char *p = buf;
-    int i = len;
-
-    while (i) {
-        out_char(p_tty->p_console, *p++);
-        i--;
-    }
-}
-
-PUBLIC int sys_write(PROCESS *p_proc, char *buf, int len, int none)
-{
-    tty_write(&tty_table[p_proc->nr_tty], buf, len);
-
-    return 0;
-}
-
 PUBLIC int sys_printx(PROCESS *p_proc, char *s)
 {
     const char *p;
@@ -177,4 +121,42 @@ PUBLIC int sys_printx(PROCESS *p_proc, char *s)
     }
 
     return 0;
+}
+
+PRIVATE void init_tty(TTY *p_tty)
+{
+    p_tty->inbuf_count = 0;
+    p_tty->p_inbuf_head = p_tty->p_inbuf_tail = p_tty->in_buf;
+
+    init_screen(p_tty);
+}
+
+PRIVATE void tty_do_read(TTY *p_tty)
+{
+    if (is_current_console(p_tty->p_console))
+        keyboard_read(p_tty);
+}
+
+PRIVATE void tty_do_write(TTY *p_tty)
+{
+    if (p_tty->inbuf_count) {
+        char ch = *(p_tty->p_inbuf_tail);
+        p_tty->p_inbuf_tail++;
+        if (p_tty->p_inbuf_tail == p_tty->in_buf + TTY_IN_BYTES)
+            p_tty->p_inbuf_tail = p_tty->in_buf;
+        p_tty->inbuf_count--;
+
+        out_char(p_tty->p_console, ch);
+    }
+}
+
+PRIVATE void put_key(TTY *p_tty, u32 key)
+{
+    if (p_tty->inbuf_count < TTY_IN_BYTES) {
+        *(p_tty->p_inbuf_head) = key;
+        p_tty->p_inbuf_head++;
+        if (p_tty->p_inbuf_head == p_tty->in_buf + TTY_IN_BYTES)
+            p_tty->p_inbuf_head = p_tty->in_buf;
+        p_tty->inbuf_count++;
+    }
 }

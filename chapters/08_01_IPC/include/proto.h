@@ -35,6 +35,7 @@ void restart();
 
 /* main.c */
 PUBLIC int kernel_main();
+PUBLIC int get_ticks();
 void TestA();
 void TestB();
 void TestC();
@@ -48,7 +49,6 @@ PUBLIC void init_clock();
 PUBLIC void schedule();
 PUBLIC int ldt_seg_linear(PROCESS *p, int idx);
 PUBLIC void *va2la(int pid, void *va);
-PUBLIC int sys_get_ticks();
 PUBLIC int sys_sendrec();
 PUBLIC int send_recv(int function, int src_dest, MESSAGE *msg);
 PUBLIC void reset_msg(MESSAGE *p);
@@ -59,8 +59,6 @@ PUBLIC void task_sys();
 /* syscall.asm */
 PUBLIC int printx(char *str);
 PUBLIC int sendrec(int function, int src_dest, MESSAGE* p_msg);
-PUBLIC int get_ticks();
-PUBLIC int write(char *buf, int len);
 
 /* keyboard.c */
 PUBLIC void init_keyboard();
@@ -69,7 +67,6 @@ PUBLIC void keyboard_read();
 /* tty.c */
 PUBLIC void task_tty();
 PUBLIC void in_process(TTY *p_tty, u32 key);
-PUBLIC int sys_write(PROCESS *p_proc, char *buf, int len, int none);
 PUBLIC int sys_printx(PROCESS *p_proc, char *s);
 
 /* console.c */
