@@ -277,41 +277,50 @@ save:
     push   es     ; ┣ 保护现场
     push   fs     ; ┃
     push   gs     ; ┛
+
+    mov    esi, edx
     mov    dx, ss
     mov    ds, dx
     mov    es, dx
+    mov    fs, dx
+    mov    edx, esi
 
-    mov    esi, esp ; 此时 esi 为进程表起始地址
+    mov    esi, esp                     ; 此时 esi 为进程表起始地址
 
     inc    dword [k_reenter]
-    cmp    dword [k_reenter], 0 ; 如果 k_reenter != 0，则表示中断重入
+    cmp    dword [k_reenter], 0         ; 如果 k_reenter != 0，则表示中断重入
     jne    .1
-    mov    esp, StackTop ; 切换到内核栈
+    mov    esp, StackTop                ; 切换到内核栈
     push   restart
     jmp    [esi + RETADR - P_STACKBASE] ; 返回 hwint_master
     .1:
         push   restart_reenter
     .2:
     jmp    [esi + RETADR - P_STACKBASE] ; 返回 hwint_master
-    ; 由于存在栈切换并且压栈的值没有弹出，所以不能使用 ret 直接返回。
+                                        ; 由于存在栈切换并且压栈的值没有弹出
+                                        ; 所以不能使用 ret 直接返回。
 
 sys_call:
     call   save
-
-    push   dword [p_proc_ready]
-
     sti
+
+    push   esi
+
+    push   edx
     push   ecx
     push   ebx
+    push   dword [p_proc_ready]
     call   [sys_call_table + eax * 4]
-    add    esp, 4 * 3
-    mov    [esi + EAXREG - P_STACKBASE], eax ; 返回值
-    cli
+    add    esp, 4 * 4
 
+    pop    esi
+    mov    [esi + EAXREG - P_STACKBASE], eax ; 返回值
+
+    cli
     ret
 
 restart: ; 非中断重入
-    mov    esp, [p_proc_ready]           ; 下一个要启动的进程
+    mov    esp, [p_proc_ready]           ; 切换到进程表栈
     lldt   [esp + P_LDT_SEL]             ; 加载该进程的 LDT
     lea    eax, [esp + P_STACKTOP]       ; ┓ 下一次中断发生时，esp 将变成 s_proc.regs 的末地址
     mov    dword [tss + TSS3_S_SP0], eax ; ┻ 然后再将该进程的 ss/esp/eflags/cs/eip 压栈

@@ -4,8 +4,7 @@
 #include "type.h"
 #include "protect.h"
 
-typedef struct s_stackframe
-{
+typedef struct strackframe {
     u32 gs;         // ┓
     u32 fs;         // ┃
     u32 es;         // ┣ save 压栈
@@ -26,43 +25,56 @@ typedef struct s_stackframe
     u32 ss;         // ┛
 } STACK_FRAME;
 
-typedef struct s_proc
-{
-    STACK_FRAME regs;
-    u16         ldt_sel;
-    DESCRIPTOR  ldts[LDT_SIZE];
+typedef struct proc {
+    struct strackframe regs;
+    u16 ldt_sel;
+    DESCRIPTOR ldts[LDT_SIZE];
 
-    int         ticks;
-    int         priority;
+    int ticks;
+    int priority;
 
-    u32         pid;
-    char        p_name[16];
+    u32 pid;
+    char name[16];
 
-    int         nr_tty;
+    int p_flags;
+
+    MESSAGE *p_msg;
+    int p_recvfrom;
+    int p_sendto;
+    int has_int_msg;
+    struct proc *q_sending;
+    struct proc *next_sending;
+
+    int nr_tty;
 } PROCESS;
 
-typedef struct s_task
-{
+typedef struct task {
     task_f initial_eip; // 入口地址
     int    stacksize;
     char   name[32];
 } TASK;
 
 /* 任务数/进程数 */
-#define NR_TASKS 1
+#define NR_TASKS 2
 #define NR_PROCS 3
+#define FIRST_PROC proc_table[0]
+#define LAST_PROC  proc_table[NR_TASKS + NR_PROCS - 1]
 
 /* 进程栈 */
 #define STACK_SIZE_TTY   0x8000
+#define STACK_SIZE_SYS   0x8000
 #define STACK_SIZE_TESTA 0x8000
 #define STACK_SIZE_TESTB 0x8000
 #define STACK_SIZE_TESTC 0x8000
 
 #define STACK_SIZE_TOTAL ( \
     STACK_SIZE_TTY + \
+    STACK_SIZE_SYS + \
     STACK_SIZE_TESTA + \
     STACK_SIZE_TESTB + \
     STACK_SIZE_TESTC \
 )
+
+#define proc2pid(x) (x - proc_table)
 
 #endif

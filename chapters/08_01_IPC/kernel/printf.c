@@ -9,7 +9,8 @@ PUBLIC int printf(const char *fmt, ...)
 
     va_list arg = (va_list)((char *)(&fmt) + 4);
     i = vsprintf(buf, fmt, arg);
-    write(buf, i);
+    buf[i] = 0;
+    printx(buf);
 
     return i;
 }

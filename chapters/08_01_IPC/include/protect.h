@@ -76,7 +76,9 @@ typedef struct s_tss
 #define SELECTOR_KERNEL_DS  SELECTOR_FLAT_RW
 #define SELECTOR_KERNEL_GS  SELECTOR_VIDEO
 
-#define LDT_SIZE 2 // LDT 数目
+#define LDT_SIZE     2 // LDT 数目
+#define INDEX_LDT_C  0
+#define INDEX_LDT_RW 1
 
 /* 选择子类型值说明 */
 #define SA_RPL_MASK 0xFFFC

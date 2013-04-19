@@ -31,7 +31,7 @@ PUBLIC int kernel_main()
             eflags = 0x202;
         }
 
-        strcpy(p_proc->p_name, p_task->name);
+        strcpy(p_proc->name, p_task->name);
         p_proc->pid = i;
         p_proc->ldt_sel = selector_ldt;
 
@@ -56,7 +56,15 @@ PUBLIC int kernel_main()
         p_proc->regs.esp= (u32)p_task_stack;
         p_proc->regs.eflags = eflags;
 
-        p_proc->nr_tty = 0;
+        p_proc->nr_tty = 1;
+
+        p_proc->p_flags = 0;
+        p_proc->p_msg = 0;
+        p_proc->p_recvfrom = NO_TASK;
+        p_proc->p_sendto = NO_TASK;
+        p_proc->has_int_msg = 0;
+        p_proc->q_sending = 0;
+        p_proc->next_sending = 0;
 
         p_task_stack -= p_task->stacksize;
         p_proc++;
@@ -65,13 +73,15 @@ PUBLIC int kernel_main()
     }
 
     proc_table[0].priority = proc_table[0].ticks = 15;
-    proc_table[1].priority = proc_table[1].ticks =  5;
+    proc_table[1].priority = proc_table[1].ticks = 15;
     proc_table[2].priority = proc_table[2].ticks =  5;
     proc_table[3].priority = proc_table[3].ticks =  5;
+    proc_table[4].priority = proc_table[4].ticks =  5;
 
     proc_table[1].nr_tty = 0;
     proc_table[2].nr_tty = 1;
-    proc_table[3].nr_tty = 1;
+    proc_table[3].nr_tty = 2;
+    proc_table[4].nr_tty = 2;
 
     k_reenter = 0;
     ticks = 0;
@@ -85,6 +95,15 @@ PUBLIC int kernel_main()
     while(1){}
 }
 
+PUBLIC int get_ticks()
+{
+    MESSAGE msg;
+    reset_msg(&msg);
+    msg.type = GET_TICKS;
+    send_recv(BOTH, TASK_SYS, &msg);
+    return msg.RETVAL;
+}
+
 void TestA()
 {
     while(1) {
@@ -95,7 +114,9 @@ void TestA()
 
 void TestB()
 {
+    int i = 0;
     while(1) {
+        assert(i++ <= 10);
         printf("B");
         milli_delay(1000);
     }
@@ -107,4 +128,17 @@ void TestC()
         printf("C");
         milli_delay(1000);
     }
+}
+
+PUBLIC void panic(const char *fmt, ...)
+{
+    int i;
+    char buf[256];
+
+    va_list arg = (va_list)((char *)&fmt + 4);
+    i = vsprintf(buf, fmt, arg);
+
+    printl("%c ||panic!! %s", MAG_CH_PANIC, buf);
+
+    __asm__ __volatile__("ud2");
 }

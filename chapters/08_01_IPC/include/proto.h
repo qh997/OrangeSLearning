@@ -38,6 +38,7 @@ PUBLIC int kernel_main();
 void TestA();
 void TestB();
 void TestC();
+PUBLIC void panic(const char *fmt, ...);
 
 /* clock.c */
 PUBLIC void milli_delay(int milli_sec);
@@ -45,9 +46,19 @@ PUBLIC void init_clock();
 
 /* proc.c */
 PUBLIC void schedule();
+PUBLIC int ldt_seg_linear(PROCESS *p, int idx);
+PUBLIC void *va2la(int pid, void *va);
 PUBLIC int sys_get_ticks();
+PUBLIC int sys_sendrec();
+PUBLIC int send_recv(int function, int src_dest, MESSAGE *msg);
+PUBLIC void reset_msg(MESSAGE *p);
+
+/* systask.c */
+PUBLIC void task_sys();
 
 /* syscall.asm */
+PUBLIC int printx(char *str);
+PUBLIC int sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC int get_ticks();
 PUBLIC int write(char *buf, int len);
 
@@ -58,7 +69,8 @@ PUBLIC void keyboard_read();
 /* tty.c */
 PUBLIC void task_tty();
 PUBLIC void in_process(TTY *p_tty, u32 key);
-PUBLIC int sys_write(char *buf, int len, PROCESS *p_proc);
+PUBLIC int sys_write(PROCESS *p_proc, char *buf, int len, int none);
+PUBLIC int sys_printx(PROCESS *p_proc, char *s);
 
 /* console.c */
 PUBLIC void init_screen(TTY *p_tty);
@@ -72,5 +84,10 @@ PUBLIC int vsprintf(char *buf, const char *fmt, va_list args);
 
 /* printf.c */
 PUBLIC int printf(const char *fmt, ...);
+#define printl printf
+
+/* misc.c */
+PUBLIC void spin(char *func_name);
+PUBLIC void assertion_failure(char *exp, char *file, char *base_file, int line);
 
 #endif

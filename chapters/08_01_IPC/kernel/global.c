@@ -12,7 +12,8 @@ PUBLIC char task_stack[STACK_SIZE_TOTAL];
 
 /* 任务表 */
 PUBLIC TASK task_table[NR_TASKS] = {
-    {task_tty, STACK_SIZE_TTY, "tty"},
+    {task_tty, STACK_SIZE_TTY, "TTY"},
+    {task_sys, STACK_SIZE_SYS, "SYS"},
 };
 
 /* 用户进程表 */
@@ -31,6 +32,8 @@ PUBLIC irq_handler irq_table[NR_IRQ];
 
 /* 系统调用 */
 PUBLIC system_call sys_call_table[NR_SYS_CALL] = {
+    sys_printx,
+    sys_sendrec,
     sys_get_ticks,
     sys_write,
 };

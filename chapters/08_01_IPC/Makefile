@@ -41,6 +41,7 @@ KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
 KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
+KERNEL_BIN := $(OUT_DIR)/kernel.bin
 KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/start.o \
               $(OUT_DIR)/kliba.o \
@@ -57,8 +58,9 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/tty.o \
               $(OUT_DIR)/console.o \
               $(OUT_DIR)/vsprintf.o \
-              $(OUT_DIR)/printf.o
-KERNEL_BIN := $(OUT_DIR)/kernel.bin
+              $(OUT_DIR)/printf.o \
+              $(OUT_DIR)/misc.o \
+              $(OUT_DIR)/systask.o
 
 OBJ_BOOT := boot.bin
 OBJ_LOADER := loader.bin
@@ -179,5 +181,13 @@ $(OUT_DIR)/vsprintf.o: $(KERNEL_PATH)/vsprintf.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/misc.o: $(LIB_PATH)/misc.c
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/systask.o: $(KERNEL_PATH)/systask.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

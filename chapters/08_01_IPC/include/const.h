@@ -1,7 +1,7 @@
 #ifndef _KERL__CONST_H_
 #define _KERL__CONST_H_
 
-#include "protect.h"
+#include "proc.h"
 
 #define EXTERN extern
 #define PUBLIC
@@ -9,6 +9,18 @@
 
 #define TRUE 1
 #define FALSE 0
+#define NULL  0
+
+/* color */
+#define BLACK  0x0  /*      0000 */
+#define WHITE  0x7  /*      0111 */
+#define RED    0x4  /*      0100 */
+#define GREEN  0x2  /*      0010 */
+#define BLUE   0x1  /*      0001 */
+#define FLASH  0x80 /* 1000 0000 */
+#define BRIGHT 0x08 /* 0000 1000 */
+
+#define MAKE_COLOR(x,y) ((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
 
 /* GDT 和 IDT 中描述符数目 */
 #define GDT_SIZE 128
@@ -23,6 +35,10 @@
 #define RPL_KRNL SA_RPL0
 #define RPL_TASK SA_RPL1
 #define RPL_USER SA_RPL3
+
+/* Process */
+#define SENDING   0x02
+#define RECEIVING 0x04
 
 /* TTY */
 #define NR_CONSOLES 3
@@ -58,13 +74,58 @@
 #define V_MEM_SIZE    0x8000  /* 32K: B8000H -> BFFFFH */
 
 /* Hardware interrupts */
-#define NR_IRQ 16
-#define CLOCK_IRQ    0
-#define KEYBOARD_IRQ 1
+#define NR_IRQ        16
+#define CLOCK_IRQ     0
+#define KEYBOARD_IRQ  1
+#define CASCADE_IRQ   2  /* cascade enable for 2nd AT controller */
+#define ETHER_IRQ     3  /* default ethernet interrupt vector */
+#define SECONDARY_IRQ 3  /* RS232 interrupt vector for port 2 */
+#define RS232_IRQ     4  /* RS232 interrupt vector for port 1 */
+#define XT_WINI_IRQ   5  /* xt winchester */
+#define FLOPPY_IRQ    6  /* floppy disk */
+#define PRINTER_IRQ   7
+#define AT_WINI_IRQ   14 /* at winchester */
 
-#define NR_SYS_CALL 2
+/* tasks */
+#define INVALID_DRIVER -20
+#define INTERRUPT      -10
+#define TASK_TTY       0
+#define TASK_SYS       1
+
+#define ANY     (NR_TASKS + NR_PROCS + 10)
+#define NO_TASK (NR_TASKS + NR_PROCS + 20)
+
+/* system call */
+#define NR_SYS_CALL 4
+
+/* ipc */
+#define SEND    1
+#define RECEIVE 2
+#define BOTH    3
+
+/* magic chars used by `printx' */
+#define MAG_CH_PANIC  '\002'
+#define MAG_CH_ASSERT '\003'
+
+enum msgtype {
+    HARD_INT = 1,
+
+    GET_TICKS,
+};
+
+#define RETVAL u.m3.m3i1
 
 #define enable_interrupt() __asm__("sti")
 #define disable_interrupt() __asm__("cli")
+
+#define ASSERT
+#ifdef ASSERT
+void assertion_failure(char *exp, char *file, char *base_file, int line);
+#define assert(exp) \
+    if (exp) ; \
+    else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__)
+#else
+#define assert(exp)
+#endif
 
 #endif

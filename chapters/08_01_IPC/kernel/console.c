@@ -22,7 +22,7 @@ PUBLIC void init_screen(TTY *p_tty)
 
     if (nr_tty == 0) {
         p_tty->p_console->cursor = disp_pos / 2;
-        //disp_pos = 0;
+        disp_pos = 0;
     }
     else {
         out_char(p_tty->p_console, nr_tty + '0');
