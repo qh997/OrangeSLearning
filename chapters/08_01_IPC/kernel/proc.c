@@ -12,7 +12,7 @@ PRIVATE int msg_receive(PROCESS *current, int src, MESSAGE *m);
 /*****************************************************************************/
 /* FUNCTION NAME: schedule
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: void
+/*   RETURN TYPE: void
 /*    PARAMETERS: void
 /*   DESCRIPTION: 进程调度
 /*****************************************************************************/
@@ -38,8 +38,8 @@ PUBLIC void schedule()
 
 /*****************************************************************************/
 /* FUNCTION NAME: ldt_seg_linear
-/*     PRIVILEGE: 0 ～ 1
-/* RETURN   TYPE: int
+/*     PRIVILEGE: 0 ~ 1
+/*   RETURN TYPE: int
 /*    PARAMETERS: PROCESS *p - 进程指针
 /*                int idx    - LDT 索引号
 /*   DESCRIPTION: 获取进程指定 LDT 的基址
@@ -53,8 +53,8 @@ PUBLIC int ldt_seg_linear(PROCESS *p, int idx)
 
 /*****************************************************************************/
 /* FUNCTION NAME: va2la
-/*     PRIVILEGE: 0 ～ 1
-/* RETURN   TYPE: void *
+/*     PRIVILEGE: 0 ~ 1
+/*   RETURN TYPE: void *
 /*    PARAMETERS: int pid
 /*                void *va
 /*   DESCRIPTION: 获取 va 的线性地址（基址 + 偏移）
@@ -74,7 +74,7 @@ PUBLIC void *va2la(int pid, void *va)
 /*****************************************************************************/
 /* FUNCTION NAME: sys_sendrec
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: int
+/*   RETURN TYPE: int
 /*    PARAMETERS: PROCESS *p   - 调用者进程
 /*                int function - SEND/RECEIVE
 /*                int src_dest - 接受／发送者
@@ -111,8 +111,8 @@ PUBLIC int sys_sendrec(PROCESS *p, int function, int src_dest, MESSAGE *m)
 
 /*****************************************************************************/
 /* FUNCTION NAME: send_recv
-/*     PRIVILEGE: 1 ～ 3
-/* RETURN   TYPE: int
+/*     PRIVILEGE: 1 ~ 3
+/*   RETURN TYPE: int
 /*    PARAMETERS: int function - SEND/RECEIVE/BOTH
 /*                int src_dest - 接受／发送者
 /*                MESSAGE *msg - 消息体
@@ -147,8 +147,8 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE *msg)
 
 /*****************************************************************************/
 /* FUNCTION NAME: reset_msg
-/*     PRIVILEGE: 0 ～ 3
-/* RETURN   TYPE: void
+/*     PRIVILEGE: 0 ~ 3
+/*   RETURN TYPE: void
 /*    PARAMETERS: MESSAGE *p
 /*   DESCRIPTION: 清空消息体
 /*****************************************************************************/
@@ -160,7 +160,7 @@ PUBLIC void reset_msg(MESSAGE *p)
 /*****************************************************************************/
 /* FUNCTION NAME: block
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: void
+/*   RETURN TYPE: void
 /*    PARAMETERS: PROCESS *p
 /*   DESCRIPTION: 阻塞进程
 /*****************************************************************************/
@@ -173,7 +173,7 @@ PRIVATE void block(PROCESS *p)
 /*****************************************************************************/
 /* FUNCTION NAME: unblock
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: void
+/*   RETURN TYPE: void
 /*    PARAMETERS: PROCESS *p
 /*   DESCRIPTION: 恢复进程
 /*****************************************************************************/
@@ -185,9 +185,9 @@ PRIVATE void unblock(PROCESS *p)
 /*****************************************************************************/
 /* FUNCTION NAME: deadlock
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: int - 成功 0；失败 1
+/*   RETURN TYPE: int - 成功 0；失败 1
 /*    PARAMETERS: int src
-/*              : int dest
+/*                int dest
 /*   DESCRIPTION: 判断消息发送是否发生死锁
 /*****************************************************************************/
 PRIVATE int deadlock(int src, int dest)
@@ -220,10 +220,10 @@ PRIVATE int deadlock(int src, int dest)
 /*****************************************************************************/
 /* FUNCTION NAME: msg_send
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: int
+/*   RETURN TYPE: int
 /*    PARAMETERS: PROCESS *current
-/*              : int dest
-/*              : MESSAGE *m
+/*                int dest
+/*                MESSAGE *m
 /*   DESCRIPTION: 发送一个消息给 dest 进程
 /*****************************************************************************/
 PRIVATE int msg_send(PROCESS *current, int dest, MESSAGE *m)
@@ -292,10 +292,10 @@ PRIVATE int msg_send(PROCESS *current, int dest, MESSAGE *m)
 /*****************************************************************************/
 /* FUNCTION NAME: msg_receive
 /*     PRIVILEGE: 0
-/* RETURN   TYPE: int
+/*   RETURN TYPE: int
 /*    PARAMETERS: PROCESS *current
-/*              : int src
-/*              : MESSAGE *m
+/*                int src
+/*                MESSAGE *m
 /*   DESCRIPTION: 接收一个来自 src 进程的消息
 /*****************************************************************************/
 PRIVATE int msg_receive(PROCESS *current, int src, MESSAGE *m)

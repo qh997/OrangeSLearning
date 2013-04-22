@@ -5,6 +5,13 @@
 #include "proto.h"
 #include "global.h"
 
+/*****************************************************************************/
+/* FUNCTION NAME: cstart
+/*     PRIVILEGE: 0
+/*   RETURN TYPE: void
+/*    PARAMETERS: void
+/*   DESCRIPTION: 切换 GDT，初始化中断
+/*****************************************************************************/
 PUBLIC void cstart()
 {
     disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"

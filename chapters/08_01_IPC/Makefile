@@ -9,18 +9,22 @@ SHOW_LDLNK  := @echo ' LD '
 ENTRYPOINT := 0x30400
 
 OUT_DIR := out
-MKDIR_OUT := @[ -s out ] || mkdir $(OUT_DIR)
+MKDIR_OUT := @mkdir -p $(OUT_DIR)
 
 IMG_FILE := boot.img
 IMG_MOUNT := /mnt/floppy
 
-HEADS := include/const.h \
+HEADS := include/console.h \
+         include/const.h \
          include/global.h \
+         include/keyboard.h \
+         include/keymap.h \
+         include/proc.h \
          include/protect.h \
          include/proto.h \
          include/string.h \
-         include/type.h \
-         include/proc.h
+         include/tty.h \
+         include/type.h
 
 BOOT_PATH := boot
 BOOT_INC := $(BOOT_PATH)/include
