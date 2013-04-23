@@ -8,8 +8,6 @@ SELECTOR_KERNEL_CS  equ  8 ; LABEL_DESC_FLAT_C  - LABEL_GDT = 8
     extern  exception_handler
     extern  kernel_main
     extern  disp_str
-    extern  delay
-    extern  clock_handler
 
 ; 导入全局变量
     extern  disp_pos
@@ -24,7 +22,6 @@ SELECTOR_KERNEL_CS  equ  8 ; LABEL_DESC_FLAT_C  - LABEL_GDT = 8
 BITS  32
 
 [section .data]
-    clock_int_msg  db  "^", 0
 
 [section .bss]
     StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
@@ -141,8 +138,10 @@ _start:
     or     al, (1 << (%1 - 8)) ; ┣ 屏蔽该中断
     out    INT_S_CTLMASK, al   ; ┛
 
-    mov    al, EOI           ; ┓
-    out    INT_S_CTL, al     ; ┻ 继续接收中断
+    mov    al, EOI             ; ┓
+    out    INT_M_CTL, al       ; ┃
+    nop                        ; ┣ 继续接收中断
+    out    INT_S_CTL, al       ; ┛
 
     sti
     push   %1

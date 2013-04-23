@@ -15,6 +15,7 @@ PUBLIC int disable_irq(int irq);
 PUBLIC void enable_irq(int irq);
 PUBLIC void disable_int();
 PUBLIC void enable_int();
+PUBLIC void port_read(u16 port, void *buf, int n);
 
 /* klib.c */
 PUBLIC char *itoa(char *str, int num);
@@ -45,6 +46,12 @@ PUBLIC void panic(const char *fmt, ...);
 PUBLIC void milli_delay(int milli_sec);
 PUBLIC void init_clock();
 
+/* hd.c */
+PUBLIC void task_hd();
+
+/* fs.c */
+PUBLIC void task_fs();
+
 /* proc.c */
 PUBLIC void schedule();
 PUBLIC int ldt_seg_linear(PROCESS *p, int idx);
@@ -52,6 +59,8 @@ PUBLIC void *va2la(int pid, void *va);
 PUBLIC int sys_sendrec();
 PUBLIC int send_recv(int function, int src_dest, MESSAGE *msg);
 PUBLIC void reset_msg(MESSAGE *p);
+PUBLIC void dump_msg(const char *title, MESSAGE *m);
+PUBLIC void inform_int(int task_nr);
 
 /* systask.c */
 PUBLIC void task_sys();

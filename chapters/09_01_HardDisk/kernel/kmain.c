@@ -24,18 +24,20 @@ PUBLIC int kernel_main()
     /* 初始化进程表 */
     for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
         u8 privilege, rpl;
-        int eflags;
+        int eflags, prio;
         if (i < NR_TASKS) { // 系统任务
             p_task = task_table + i;
             privilege = PRIVILEGE_TASK;
             rpl = RPL_TASK;
             eflags = 0x1202;
+            prio = 15;
         }
         else { // 用户进程
             p_task = user_proc_table + (i - NR_TASKS);
             privilege = PRIVILEGE_USER;
             rpl = RPL_USER;
             eflags = 0x202;
+            prio = 5;
         }
 
         strcpy(p_proc->name, p_task->name);
@@ -63,7 +65,7 @@ PUBLIC int kernel_main()
         p_proc->regs.esp= (u32)p_task_stack;
         p_proc->regs.eflags = eflags;
 
-        p_proc->nr_tty = 1;
+        p_proc->nr_tty = 0;
 
         p_proc->p_flags = 0;
         p_proc->p_msg = 0;
@@ -73,22 +75,17 @@ PUBLIC int kernel_main()
         p_proc->q_sending = 0;
         p_proc->next_sending = 0;
 
+        p_proc->priority = p_proc->ticks = prio;
+
         p_task_stack -= p_task->stacksize;
         p_proc++;
         p_task++;
         selector_ldt += 1 << 3; // selector_ldt += 8
     }
 
-    proc_table[0].priority = proc_table[0].ticks = 15;
-    proc_table[1].priority = proc_table[1].ticks = 15;
-    proc_table[2].priority = proc_table[2].ticks =  5;
-    proc_table[3].priority = proc_table[3].ticks =  5;
-    proc_table[4].priority = proc_table[4].ticks =  5;
-
-    proc_table[1].nr_tty = 0;
-    proc_table[2].nr_tty = 1;
-    proc_table[3].nr_tty = 2;
-    proc_table[4].nr_tty = 2;
+    proc_table[NR_TASKS + 0].nr_tty = 1;
+    proc_table[NR_TASKS + 1].nr_tty = 2;
+    proc_table[NR_TASKS + 2].nr_tty = 2;
 
     k_reenter = 0;
     ticks = 0;

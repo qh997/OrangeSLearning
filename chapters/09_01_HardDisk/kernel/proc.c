@@ -157,6 +157,35 @@ PUBLIC void reset_msg(MESSAGE *p)
     memset(p, 0, sizeof(MESSAGE));
 }
 
+PUBLIC void dump_msg(const char *title, MESSAGE *m)
+{
+}
+
+PUBLIC void inform_int(int task_nr)
+{
+    PROCESS *p = proc_table + task_nr;
+
+    if ((p->p_flags & RECEIVING) &&
+        ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
+        p->p_msg->source = INTERRUPT;
+        p->p_msg->type = HARD_INT;
+        p->p_msg = 0;
+        p->has_int_msg = 0;
+        p->p_flags &= ~RECEIVING;
+        p->p_recvfrom = NO_TASK;
+        assert(p->p_flags == 0);
+        unblock(p);
+
+        assert(p->p_flags == 0);
+        assert(p->p_msg == 0);
+        assert(p->p_recvfrom == NO_TASK);
+        assert(p->p_sendto == NO_TASK);
+    }
+    else {
+        p->has_int_msg = 1;
+    }
+}
+
 /*****************************************************************************/
 /* FUNCTION NAME: block
 /*     PRIVILEGE: 0
@@ -307,7 +336,7 @@ PRIVATE int msg_receive(PROCESS *current, int src, MESSAGE *m)
 
     assert(proc2pid(p_who_wanna_recv) != src); // 不能自己接收自己的消息
 
-    if (p_who_wanna_recv->has_int_msg &&
+    if ((p_who_wanna_recv->has_int_msg) &&
         ((src == ANY) || (src == INTERRUPT))) {
         MESSAGE msg;
         reset_msg(&msg);

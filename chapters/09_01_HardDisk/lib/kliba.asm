@@ -12,6 +12,7 @@ global  disable_irq
 global  enable_irq
 global  disable_int
 global  enable_int
+global  port_read
 
 disp_str:
     push   ebp
@@ -136,7 +137,7 @@ enable_irq:
     cli
     mov    ah, ~1
     rol    ah, cl
-    cmp    al, 8
+    cmp    cl, 8
     jae    enable_8
     enable_0:
         in     al, INT_M_CTLMASK
@@ -157,4 +158,13 @@ disable_int:
 
 enable_int:
     sti
+    ret
+
+port_read:
+    mov    edx, [esp + 4]
+    mov    edi, [esp + 8]
+    mov    ecx, [esp + 12]
+    shr    ecx, 1
+    cld
+    rep    insw
     ret

@@ -14,6 +14,8 @@ PUBLIC char task_stack[STACK_SIZE_TOTAL];
 PUBLIC TASK task_table[NR_TASKS] = {
     {task_tty, STACK_SIZE_TTY, "TTY"},
     {task_sys, STACK_SIZE_SYS, "SYS"},
+    {task_hd,  STACK_SIZE_HD,  "HD" },
+    {task_fs,  STACK_SIZE_FS,  "HD" },
 };
 
 /* 用户进程表 */

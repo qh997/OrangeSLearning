@@ -7,6 +7,8 @@
 #define PUBLIC
 #define PRIVATE static
 
+#define STR_DEFAULT_LEN 1024
+
 #define TRUE 1
 #define FALSE 0
 #define NULL  0
@@ -91,6 +93,8 @@
 #define INTERRUPT      -10
 #define TASK_TTY       0
 #define TASK_SYS       1
+#define TASK_HD        2
+#define TASK_FS        3
 
 #define ANY     (NR_TASKS + NR_PROCS + 10)
 #define NO_TASK (NR_TASKS + NR_PROCS + 20)
@@ -111,9 +115,13 @@ enum msgtype {
     HARD_INT = 1,
 
     GET_TICKS,
+
+    DEV_OPEN = 1001,
 };
 
 #define RETVAL u.m3.m3i1
+
+#define SECTOR_SIZE 512
 
 #define enable_interrupt() __asm__("sti")
 #define disable_interrupt() __asm__("cli")

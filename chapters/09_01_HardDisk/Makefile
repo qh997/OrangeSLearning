@@ -54,7 +54,7 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/protect.o \
               $(OUT_DIR)/global.o \
               $(OUT_DIR)/klib.o \
-              $(OUT_DIR)/main.o \
+              $(OUT_DIR)/kmain.o \
               $(OUT_DIR)/clock.o \
               $(OUT_DIR)/proc.o \
               $(OUT_DIR)/syscall.o \
@@ -64,7 +64,9 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/vsprintf.o \
               $(OUT_DIR)/printf.o \
               $(OUT_DIR)/misc.o \
-              $(OUT_DIR)/systask.o
+              $(OUT_DIR)/systask.o \
+              $(OUT_DIR)/hd.o \
+              $(OUT_DIR)/fs_main.o
 
 OBJ_BOOT := boot.bin
 OBJ_LOADER := loader.bin
@@ -152,7 +154,7 @@ $(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/main.o: $(KERNEL_PATH)/main.c $(HEADS)
+$(OUT_DIR)/kmain.o: $(KERNEL_PATH)/kmain.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
@@ -193,5 +195,13 @@ $(OUT_DIR)/misc.o: $(LIB_PATH)/misc.c
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_DIR)/systask.o: $(KERNEL_PATH)/systask.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/hd.o: $(KERNEL_PATH)/hd.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_DIR)/fs_main.o: fs/fs_main.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
