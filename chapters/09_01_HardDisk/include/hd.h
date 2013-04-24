@@ -1,17 +1,20 @@
 #ifndef _KERL__HD_H_
 #define _KERL__HD_H_
-
-#define REG_DATA 0x1F0
-#define REG_FEATURES 0x1F1
-#define REG_ERROR REG_FEATURES
-
-#define REG_NSECTOR 0x1F2
-#define REG_LBA_LOW 0x1F3
-#define REG_LBA_MID 0x1F4
-#define REG_LBA_HIGH 0x1F5
-#define REG_DEVICE  0x1F6
-
-#define REG_STATUS 0x1F7
+/* Command Block Registers */
+/*      MACRO          PORT            DESCRIPTION                     I/O */
+#define REG_DATA       0x1F0        /* Data                            I/O */
+#define REG_FEATURES   0x1F1        /* Features                          O */
+#define REG_ERROR      REG_FEATURES /* Error                           I   */
+#define REG_NSECTOR    0x1F2        /* Sector Count                    I/O */
+#define REG_LBA_LOW    0x1F3        /* Sector Number / LBA Bits 0-7    I/O */
+#define REG_LBA_MID    0x1F4        /* Cylinder Low / LBA Bits 8-15    I/O */
+#define REG_LBA_HIGH   0x1F5        /* Cylinder High / LBA Bits 16-23  I/O */
+#define REG_DEVICE     0x1F6        /* Drive | Head | LBA bits 24-27   I/O */
+#define REG_CMD        0x1F7        /* Command                           O */
+#define REG_STATUS     REG_CMD      /* Status                          I   */
+#define REG_DEV_CTRL   0x3F6        /* Device Control                    O */
+#define REG_ALT_STATUS REG_DEV_CTRL /* Alternate Status                I   */
+#define REG_DRV_ADDR   0x3F7        /* Drive Address                   I   */
 
 #define STATUS_BSY  0x80
 #define STATUS_DRDY 0x40
@@ -21,11 +24,6 @@
 #define STATUS_CORR 0x04
 #define STATUS_IDX  0x02
 #define STATUS_ERR  0x01
-
-#define REG_CMD REG_STATUS
-#define REG_DEV_CTRL 0x3F6
-#define REG_ALT_STATUS REG_DEV_CTRL
-#define REG_DRV_ADDR 0x3F7
 
 #define HD_TIMEOUT 10000
 #define PARTITION_TABLE_OFFSET 0x1BE

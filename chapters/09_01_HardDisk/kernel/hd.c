@@ -12,6 +12,13 @@ PRIVATE void print_identify_info(u16 *hdinfo);
 PRIVATE u8 hd_status;
 PRIVATE u8 hdbuf[SECTOR_SIZE * 2];
 
+/*****************************************************************************/
+/* FUNCTION NAME: task_hd
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: void
+/*   DESCRIPTION: 硬盘驱动主循环
+/*****************************************************************************/
 PUBLIC void task_hd()
 {
     MESSAGE msg;
@@ -37,6 +44,13 @@ PUBLIC void task_hd()
     }
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: hd_handler
+/*     PRIVILEGE: 0
+/*   RETURN TYPE: void
+/*    PARAMETERS: int irq
+/*   DESCRIPTION: 中断处理程序
+/*****************************************************************************/
 PUBLIC void hd_handler(int irq)
 {
     hd_status = in_byte(REG_STATUS);
@@ -44,6 +58,13 @@ PUBLIC void hd_handler(int irq)
     inform_int(TASK_HD);
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: init_hd
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: void
+/*   DESCRIPTION: 硬盘驱动初始化
+/*****************************************************************************/
 PRIVATE void init_hd()
 {
     u8 *pNrDrives = (u8 *)(0x475);
@@ -55,6 +76,13 @@ PRIVATE void init_hd()
     enable_irq(AT_WINI_IRQ);
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: hd_identify
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: int drive
+/*   DESCRIPTION: 硬盘识别并打印硬盘信息
+/*****************************************************************************/
 PRIVATE void hd_identify(int drive)
 {
     struct hd_cmd cmd;
@@ -67,6 +95,13 @@ PRIVATE void hd_identify(int drive)
     print_identify_info((u16 *)hdbuf);
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: hd_cmd_out
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: struct hd_cmd *cmd
+/*   DESCRIPTION: 硬盘命令输出
+/*****************************************************************************/
 PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
 {
     if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
@@ -84,6 +119,15 @@ PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
     out_byte(REG_CMD, cmd->command);
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: waitfor
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: int mask
+/*                int val
+/*                int timeout
+/*   DESCRIPTION: 等待硬盘处于某一状态
+/*****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
     int t = get_ticks();
@@ -94,12 +138,26 @@ PRIVATE int waitfor(int mask, int val, int timeout)
     return 0;
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: interrupt_wait
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: void
+/*   DESCRIPTION: 等待硬盘中断发生
+/*****************************************************************************/
 PRIVATE void interrupt_wait()
 {
     MESSAGE msg;
     send_recv(RECEIVE, INTERRUPT, &msg);
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: print_identify_info
+/*     PRIVILEGE: 1
+/*   RETURN TYPE: void
+/*    PARAMETERS: u16 *hdinfo
+/*   DESCRIPTION: 打印硬盘信息
+/*****************************************************************************/
 PRIVATE void print_identify_info(u16 *hdinfo)
 {
     char s[64];

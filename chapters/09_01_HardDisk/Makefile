@@ -17,6 +17,7 @@ IMG_MOUNT := /mnt/floppy
 HEADS := include/console.h \
          include/const.h \
          include/global.h \
+         include/hd.h \
          include/keyboard.h \
          include/keymap.h \
          include/proc.h \
@@ -122,7 +123,7 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm $(HEADS)
+$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
@@ -150,7 +151,7 @@ $(OUT_DIR)/global.o: $(KERNEL_PATH)/global.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c
+$(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
@@ -166,7 +167,7 @@ $(OUT_DIR)/proc.o: $(KERNEL_PATH)/proc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm $(HEADS)
+$(OUT_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
@@ -190,7 +191,7 @@ $(OUT_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/misc.o: $(LIB_PATH)/misc.c
+$(OUT_DIR)/misc.o: $(LIB_PATH)/misc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 

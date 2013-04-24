@@ -157,10 +157,44 @@ PUBLIC void reset_msg(MESSAGE *p)
     memset(p, 0, sizeof(MESSAGE));
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: dump_msg
+/*     PRIVILEGE: 0 ~ 3
+/*   RETURN TYPE: void
+/*    PARAMETERS: char *title
+/*                MESSAGE *m
+/*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC void dump_msg(const char *title, MESSAGE *m)
 {
+    int packed = 0;
+    printl("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",
+           title,
+           (int)m,
+           packed ? "" : "\n        ",
+           proc_table[m->source].name,
+           m->source,
+           packed ? " " : "\n        ",
+           m->type,
+           packed ? " " : "\n        ",
+           m->u.m3.m3i1,
+           m->u.m3.m3i2,
+           m->u.m3.m3i3,
+           m->u.m3.m3i4,
+           (int)m->u.m3.m3p1,
+           (int)m->u.m3.m3p2,
+           packed ? "" : "\n",
+           packed ? "" : "\n"/* , */
+        );
 }
 
+/*****************************************************************************/
+/* FUNCTION NAME: inform_int
+/*     PRIVILEGE: 0
+/*   RETURN TYPE: void
+/*    PARAMETERS: int task_nr
+/*   DESCRIPTION: 通知 task_nr 进程有一个中断发生
+/*****************************************************************************/
 PUBLIC void inform_int(int task_nr)
 {
     PROCESS *p = proc_table + task_nr;
