@@ -44,7 +44,7 @@ KERNEL_PATH := kernel
 LIB_PATH := lib
 KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
-KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector
+KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector -Wall
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 KERNEL_OBJ := $(OUT_DIR)/kernel.o \
@@ -108,8 +108,8 @@ install_loader: $(LOADER_BIN)
 install_kernel: $(KERNEL_BIN)
 	@echo Install kernel
 	@sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
-	@sudo cp $^ /mnt/floppy/.
-	@sudo umount /mnt/floppy
+	@sudo cp $^ $(IMG_MOUNT)
+	@sudo umount $(IMG_MOUNT)
 
 $(BOOT_BIN): $(BOOT_SRC) $(BOOT_HDR)
 	$(SHOW_ASMCPL) $@

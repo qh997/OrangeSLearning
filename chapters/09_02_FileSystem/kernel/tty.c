@@ -34,7 +34,7 @@ PUBLIC void task_tty()
 
 PUBLIC void in_process(TTY *p_tty, u32 key)
 {
-    char output[2] = {'\0', '\0'};
+    //char output[2] = {'\0', '\0'};
 
     if (!(key & FLAG_EXT)) {
         put_key(p_tty, key);

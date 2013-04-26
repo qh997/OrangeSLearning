@@ -188,6 +188,6 @@ PRIVATE void init_descriptor(DESCRIPTOR *p_desc, u32 base, u32 limit, u16 attrib
     p_desc->base_low = base & 0xFFFF;
     p_desc->base_mid = (base >> 16) & 0xFF;
     p_desc->attr1 = attribute & 0xFF;
-    p_desc->limit_high_attr2 = ((limit>>16) & 0x0F) | (attribute>>8) & 0xF0;
+    p_desc->limit_high_attr2 = ((limit>>16) & 0x0F) | ((attribute>>8) & 0xF0);
     p_desc->base_high = (base >> 24) & 0xFF;
 }

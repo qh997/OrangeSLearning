@@ -6,11 +6,11 @@
 #include "string.h"
 
 /*****************************************************************************/
-/* FUNCTION NAME: kernel_main
-/*     PRIVILEGE: 0
-/*   RETURN TYPE: int
-/*    PARAMETERS: void
-/*   DESCRIPTION: 
+//* FUNCTION NAME: kernel_main
+//*     PRIVILEGE: 0
+//*   RETURN TYPE: int
+//*    PARAMETERS: void
+//*   DESCRIPTION: 
 /*****************************************************************************/
 PUBLIC int kernel_main()
 {
@@ -100,11 +100,11 @@ PUBLIC int kernel_main()
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: get_ticks
-/*     PRIVILEGE: 3
-/*   RETURN TYPE: int
-/*    PARAMETERS: void
-/*   DESCRIPTION: 
+//* FUNCTION NAME: get_ticks
+//*     PRIVILEGE: 3
+//*   RETURN TYPE: int
+//*    PARAMETERS: void
+//*   DESCRIPTION: 
 /*****************************************************************************/
 PUBLIC int get_ticks()
 {
@@ -142,12 +142,12 @@ void TestC()
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: panic
-/*     PRIVILEGE: 3
-/*   RETURN TYPE: int
-/*    PARAMETERS: const char *fmt
-/*                ...
-/*   DESCRIPTION: 
+//* FUNCTION NAME: panic
+//*     PRIVILEGE: 3
+//*   RETURN TYPE: int
+//*    PARAMETERS: const char *fmt
+//*                ...
+//*   DESCRIPTION: 
 /*****************************************************************************/
 PUBLIC void panic(const char *fmt, ...)
 {

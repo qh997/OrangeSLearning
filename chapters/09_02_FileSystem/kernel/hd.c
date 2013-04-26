@@ -13,11 +13,11 @@ PRIVATE u8 hd_status;
 PRIVATE u8 hdbuf[SECTOR_SIZE * 2];
 
 /*****************************************************************************/
-/* FUNCTION NAME: task_hd
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: void
-/*   DESCRIPTION: 硬盘驱动主循环
+//* FUNCTION NAME: task_hd
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: void
+//*   DESCRIPTION: 硬盘驱动主循环
 /*****************************************************************************/
 PUBLIC void task_hd()
 {
@@ -45,11 +45,11 @@ PUBLIC void task_hd()
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: hd_handler
-/*     PRIVILEGE: 0
-/*   RETURN TYPE: void
-/*    PARAMETERS: int irq
-/*   DESCRIPTION: 中断处理程序
+//* FUNCTION NAME: hd_handler
+//*     PRIVILEGE: 0
+//*   RETURN TYPE: void
+//*    PARAMETERS: int irq
+//*   DESCRIPTION: 中断处理程序
 /*****************************************************************************/
 PUBLIC void hd_handler(int irq)
 {
@@ -59,11 +59,11 @@ PUBLIC void hd_handler(int irq)
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: init_hd
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: void
-/*   DESCRIPTION: 硬盘驱动初始化
+//* FUNCTION NAME: init_hd
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: void
+//*   DESCRIPTION: 硬盘驱动初始化
 /*****************************************************************************/
 PRIVATE void init_hd()
 {
@@ -77,11 +77,11 @@ PRIVATE void init_hd()
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: hd_identify
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: int drive
-/*   DESCRIPTION: 硬盘识别并打印硬盘信息
+//* FUNCTION NAME: hd_identify
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: int drive
+//*   DESCRIPTION: 硬盘识别并打印硬盘信息
 /*****************************************************************************/
 PRIVATE void hd_identify(int drive)
 {
@@ -96,11 +96,11 @@ PRIVATE void hd_identify(int drive)
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: hd_cmd_out
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: struct hd_cmd *cmd
-/*   DESCRIPTION: 硬盘命令输出
+//* FUNCTION NAME: hd_cmd_out
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: struct hd_cmd *cmd
+//*   DESCRIPTION: 硬盘命令输出
 /*****************************************************************************/
 PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
 {
@@ -120,13 +120,13 @@ PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: waitfor
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: int mask
-/*                int val
-/*                int timeout
-/*   DESCRIPTION: 等待硬盘处于某一状态
+//* FUNCTION NAME: waitfor
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: int mask
+//*                int val
+//*                int timeout
+//*   DESCRIPTION: 等待硬盘处于某一状态
 /*****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
@@ -139,11 +139,11 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: interrupt_wait
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: void
-/*   DESCRIPTION: 等待硬盘中断发生
+//* FUNCTION NAME: interrupt_wait
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: void
+//*   DESCRIPTION: 等待硬盘中断发生
 /*****************************************************************************/
 PRIVATE void interrupt_wait()
 {
@@ -152,11 +152,11 @@ PRIVATE void interrupt_wait()
 }
 
 /*****************************************************************************/
-/* FUNCTION NAME: print_identify_info
-/*     PRIVILEGE: 1
-/*   RETURN TYPE: void
-/*    PARAMETERS: u16 *hdinfo
-/*   DESCRIPTION: 打印硬盘信息
+//* FUNCTION NAME: print_identify_info
+//*     PRIVILEGE: 1
+//*   RETURN TYPE: void
+//*    PARAMETERS: u16 *hdinfo
+//*   DESCRIPTION: 打印硬盘信息
 /*****************************************************************************/
 PRIVATE void print_identify_info(u16 *hdinfo)
 {

@@ -273,7 +273,7 @@ PRIVATE void kb_ack()
 
     do {
         kb_read = in_byte(KB_DATA);
-    } while (kb_read = !KB_ACK);
+    } while ((kb_read = !KB_ACK));
 }
 
 PRIVATE void set_leds()
