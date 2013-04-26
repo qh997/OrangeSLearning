@@ -2,9 +2,10 @@ ASM := nasm
 CC := gcc
 LD := ld
 
-SHOW_ASMCPL := @echo 'ASM '
-SHOW_CCCPL  := @echo ' CC '
-SHOW_LDLNK  := @echo ' LD '
+SHOW_ASMCPL := @echo -n '   ASM    '; basename
+SHOW_CCCPL  := @echo -n '    CC    '; basename
+SHOW_LDLNK  := @echo -n '    LD    '; basename
+SHOW_INSTAL := @echo -n ' INSTALL  '; basename
 
 ENTRYPOINT := 0x30400
 
@@ -69,19 +70,13 @@ KERNEL_OBJ := $(OUT_DIR)/kernel.o \
               $(OUT_DIR)/hd.o \
               $(OUT_DIR)/fs_main.o
 
-OBJ_BOOT := boot.bin
-OBJ_LOADER := loader.bin
-OBJ_KERNEL := kernel.bin
-OBJECTS :=
-OBJECTS += $(OBJ_BOOT)
-OBJECTS += $(OBJ_LOADER)
-OBJECTS += $(OBJ_KERNEL)
-
 .PHONY: everytning all init clean install install_boot install_loader install_kernel
 
 everytning: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
+	@echo
 
 all: clean everytning install
+	@echo
 
 init:
 	@echo QH Operating System
@@ -96,17 +91,17 @@ clean:
 	@-rm -rf $(OUT_DIR)/
 
 install_boot: $(BOOT_BIN)
-	@echo Install boot
+	$(SHOW_INSTAL) $<
 	@$(dd if=$^ of=$(IMG_FILE) bs=512 count=1 conv=notrunc)
 
 install_loader: $(LOADER_BIN)
-	@echo Install loader
+	$(SHOW_INSTAL) $<
 	@sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
 	@sudo cp $^ $(IMG_MOUNT)
 	@sudo umount $(IMG_MOUNT)
 
 install_kernel: $(KERNEL_BIN)
-	@echo Install kernel
+	$(SHOW_INSTAL) $<
 	@sudo mount -o loop $(IMG_FILE) $(IMG_MOUNT)
 	@sudo cp $^ $(IMG_MOUNT)
 	@sudo umount $(IMG_MOUNT)
