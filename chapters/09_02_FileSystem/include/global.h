@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "tty.h"
 #include "console.h"
+#include "fs.h"
 
 #ifdef GLOBAL_VARIABLES_HERE
 #undef  EXTERN
@@ -37,5 +38,7 @@ EXTERN int ticks;
 EXTERN int     nr_current_console;
 extern TTY     tty_table[];
 extern CONSOLE console_table[];
+
+extern struct dev_drv_map dd_map[];
 
 #endif

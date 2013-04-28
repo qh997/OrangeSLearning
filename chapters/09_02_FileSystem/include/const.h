@@ -2,6 +2,7 @@
 #define _KERL__CONST_H_
 
 #include "proc.h"
+#include "config.h"
 
 #define EXTERN extern
 #define PUBLIC
@@ -120,8 +121,44 @@ enum msgtype {
 };
 
 #define RETVAL u.m3.m3i1
+#define DEVICE u.m3.m3i4
 
+/* hard drive */
 #define SECTOR_SIZE 512
+#define SECTOR_BITS (SECTOR_SIZE * 8)
+#define SECTOR_SIZE_SHIFT 9
+
+#define DEV_NULL     0
+#define DEV_FLOPPY   1
+#define DEV_CDROM    2
+#define DEV_HD       3
+#define DEV_CHAR_TTY 4
+#define DEV_SCSI     5
+
+#define MAJOR_SHIFT 8
+#define MAKE_DEV(a, b) ((a << MAJOR_SHIFT) | b)
+
+#define MAJOR(x) ((x >> MAJOR_SHIFT) & 0xFF)
+#define MINOR(x) (x & 0xFF)
+
+#define MAX_DRIVES 2
+#define NR_SUB_PER_PART 16
+#define NR_PART_PER_DRIVE 4
+#define NR_PRIM_PER_DRIVE (NR_PART_PER_DRIVE + 1)
+#define NR_SUB_PER_DRIVE (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
+#define MAX_PRIM (MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
+
+#define MINOR_hd1a (0x10)
+#define MINOR_hd2a (MINOR_hd1a + NR_SUB_PER_PART)
+
+#define ROOT_DEV MAKE_DEV(DEV_HD, MINOR_BOOT)
+
+#define P_PRIMARY 0
+#define P_EXTENDED  1
+
+#define QHS_OART 0x99
+#define NO_PART 0x00
+#define EXT_PART 0x05
 
 #define enable_interrupt() __asm__("sti")
 #define disable_interrupt() __asm__("cli")

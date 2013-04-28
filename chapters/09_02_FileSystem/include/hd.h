@@ -44,4 +44,28 @@ struct hd_cmd {
     u8 command;
 };
 
+struct part_info {
+    u32 base;
+    u32 size;
+};
+
+struct hd_info {
+    int open_cnt;
+    struct part_info primary[NR_PRIM_PER_DRIVE];
+    struct part_info logical[NR_SUB_PER_DRIVE];
+};
+
+struct part_ent {
+    u8 boot_ind;
+    u8 start_head;
+    u8 start_sector;
+    u8 start_cyl;
+    u8 sys_id;
+    u8 end_head;
+    u8 end_sector;
+    u8 end_cyl;
+    u32 start_sect;
+    u32 nr_sects;
+} PARTITION_ENTRY;
+
 #endif
