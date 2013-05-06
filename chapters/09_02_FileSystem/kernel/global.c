@@ -15,7 +15,7 @@ PUBLIC TASK task_table[NR_TASKS] = {
     {task_tty, STACK_SIZE_TTY, "TTY"},
     {task_sys, STACK_SIZE_SYS, "SYS"},
     {task_hd,  STACK_SIZE_HD,  "HD" },
-    {task_fs,  STACK_SIZE_FS,  "HD" },
+    {task_fs,  STACK_SIZE_FS,  "FS" },
 };
 
 /* 用户进程表 */
@@ -39,10 +39,10 @@ PUBLIC system_call sys_call_table[NR_SYS_CALL] = {
 };
 
 struct dev_drv_map dd_map[] = {
-    {INVALID_DRIVER},
-    {INVALID_DRIVER},
-    {INVALID_DRIVER},
-    {TASK_HD},
-    {TASK_TTY},
-    {INVALID_DRIVER},
+    {INVALID_DRIVER}, // 0 : Unused
+    {INVALID_DRIVER}, // 1 : Reserved for floppy driver
+    {INVALID_DRIVER}, // 2 : Reserved for cdrom driver
+    {TASK_HD},        // 3 : Hard disk
+    {TASK_TTY},       // 4 : TTY
+    {INVALID_DRIVER}, // 5 : Reserved for scsi disk driver
 };

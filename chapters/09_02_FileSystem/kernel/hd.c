@@ -5,6 +5,9 @@
 
 PRIVATE void init_hd();
 PRIVATE void hd_open(int device);
+PRIVATE void hd_close(int device);
+PRIVATE void hd_rdwt(MESSAGE *p);
+PRIVATE void hd_ioctl(MESSAGE *p);
 PRIVATE void partition(int device, int style);
 PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent *entry);
 PRIVATE void print_hdinfo(struct hd_info *hdi);
@@ -24,11 +27,11 @@ PRIVATE struct hd_info hd_info[1];
 )
 
 /*****************************************************************************/
-//* FUNCTION NAME: task_hd
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: void
-//*   DESCRIPTION: 硬盘驱动主循环
+ //* FUNCTION NAME: task_hd
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 硬盘驱动主循环
 /*****************************************************************************/
 PUBLIC void task_hd()
 {
@@ -45,6 +48,20 @@ PUBLIC void task_hd()
             case DEV_OPEN:
                 hd_open(msg.DEVICE);
                 break;
+
+            case DEV_CLOSE:
+                hd_close(msg.DEVICE);
+                break;
+
+            case DEV_READ:
+            case DEV_WRITE:
+                hd_rdwt(&msg);
+                break;
+
+            case DEV_IOCTL:
+                hd_ioctl(&msg);
+                break;
+
             default:
                 dump_msg("HD driver::unknown msg", &msg);
                 spin("FS::main_loop (invalid msg.type");
@@ -56,11 +73,11 @@ PUBLIC void task_hd()
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: hd_handler
-//*     PRIVILEGE: 0
-//*   RETURN TYPE: void
-//*    PARAMETERS: int irq
-//*   DESCRIPTION: 中断处理程序
+ //* FUNCTION NAME: hd_handler
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int irq
+ //*   DESCRIPTION: 中断处理程序
 /*****************************************************************************/
 PUBLIC void hd_handler(int irq)
 {
@@ -70,11 +87,11 @@ PUBLIC void hd_handler(int irq)
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: init_hd
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: void
-//*   DESCRIPTION: 硬盘驱动初始化
+ //* FUNCTION NAME: init_hd
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 硬盘驱动初始化
 /*****************************************************************************/
 PRIVATE void init_hd()
 {
@@ -88,9 +105,15 @@ PRIVATE void init_hd()
 
     for (int i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
         memset(&hd_info[i], 0, sizeof(hd_info[0]));
-    hd_info[0].open_cnt = 0;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: hd_open
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int device
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE void hd_open(int device)
 {
     int drive = DRV_OF_DEV(device);
@@ -104,6 +127,112 @@ PRIVATE void hd_open(int device)
     }
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: hd_close
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int device
+ //*   DESCRIPTION: 
+/*****************************************************************************/
+PRIVATE void hd_close(int device)
+{
+    int drive = DRV_OF_DEV(device);
+    assert(drive == 0);
+
+    hd_info[drive].open_cnt--;
+}
+
+/*****************************************************************************/
+ //* FUNCTION NAME: hd_rdwt
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: MESSAGE *p
+ //*   DESCRIPTION: 
+/*****************************************************************************/
+PRIVATE void hd_rdwt(MESSAGE *p)
+{
+    int drive = DRV_OF_DEV(p->DEVICE);
+
+    u64 pos = p->POSITION;
+    assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
+    assert((pos & 0x1FF) == 0);
+
+    u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT);
+    int logidx = (p->DEVICE - MINOR_hd1a) % NR_SUB_PER_DRIVE;
+    sect_nr += p->DEVICE < MAX_PRIM ? hd_info[drive].primary[p->DEVICE].base
+                                    : hd_info[drive].logical[logidx].base;
+
+    struct hd_cmd cmd;
+    cmd.features = 0;
+    cmd.count = (p->CNT + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    cmd.lba_low = sect_nr & 0xFF;
+    cmd.lba_mid = (sect_nr >> 8) & 0xFF;
+    cmd.lba_high = (sect_nr >> 16) & 0xFF;
+    cmd.device = MAKE_DEVICE_REG(1, drive, (sect_nr >> 24) & 0xF);
+    cmd.command = (p->type == DEV_READ) ? ATA_READ : ATA_WRITE;
+    hd_cmd_out(&cmd);
+
+    int byte_left = p->CNT;
+    void *la = (void *)va2la(p->PROC_NR, p->BUF);
+
+    while (byte_left) {
+        int bytes = min(SECTOR_SIZE, byte_left);
+        if (p->type == DEV_READ) {
+            interrupt_wait();
+            port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+            phys_copy(la, (void *)va2la(TASK_HD, hdbuf), bytes);
+        }
+        else {
+            if(!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
+                panic("hd writing error.");
+
+            port_write(REG_DATA, la, bytes);
+            interrupt_wait();
+        }
+
+        byte_left -= SECTOR_SIZE;
+        la += SECTOR_SIZE;
+    }
+}
+
+/*****************************************************************************/
+ //* FUNCTION NAME: hd_ioctl
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: MESSAGE *p
+ //*   DESCRIPTION: 
+/*****************************************************************************/
+PRIVATE void hd_ioctl(MESSAGE *p)
+{
+    int device = p->DEVICE;
+    int drive = DRV_OF_DEV(device);
+    assert(drive == 0);
+
+    struct hd_info *hdi = &hd_info[drive];
+
+    if (p->REQUEST == DIOCTL_GET_GEO)
+    {
+        void *dst = va2la(p->PROC_NR, p->BUF);
+        void *src = va2la(
+            TASK_HD,
+            device < MAX_PRIM ? &hdi->primary[device]
+                              : &hdi->logical[(device - MINOR_hd1a) % NR_SUB_PER_DRIVE]
+        );
+
+        phys_copy(dst, src, sizeof(struct part_info));
+    }
+    else
+        assert(0);
+}
+
+/*****************************************************************************/
+ //* FUNCTION NAME: partition
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int device
+ //*                int style
+ //*   DESCRIPTION: 获取硬盘分区表
+/*****************************************************************************/
 PRIVATE void partition(int device, int style)
 {
     int drive = DRV_OF_DEV(device);
@@ -151,6 +280,15 @@ PRIVATE void partition(int device, int style)
         assert(0);
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: get_part_table
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int drive
+ //*                int sect_nr
+ //*                struct part_ent *entry
+ //*   DESCRIPTION: 读取硬盘指定扇区的分区表
+/*****************************************************************************/
 PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent *entry)
 {
     struct hd_cmd cmd;
@@ -171,6 +309,13 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent *entry)
            sizeof(struct part_ent) * NR_PART_PER_DRIVE);
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: print_hdinfo
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct hd_info *hdi
+ //*   DESCRIPTION: 打印分区信息
+/*****************************************************************************/
 PRIVATE void print_hdinfo(struct hd_info *hdi)
 {
     for (int i = 0; i < NR_PART_PER_DRIVE + 1; i++) {
@@ -197,11 +342,11 @@ PRIVATE void print_hdinfo(struct hd_info *hdi)
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: hd_identify
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: int drive
-//*   DESCRIPTION: 硬盘识别并打印硬盘信息
+ //* FUNCTION NAME: hd_identify
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int drive
+ //*   DESCRIPTION: 硬盘识别并打印硬盘信息
 /*****************************************************************************/
 PRIVATE void hd_identify(int drive)
 {
@@ -221,11 +366,11 @@ PRIVATE void hd_identify(int drive)
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: hd_cmd_out
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: struct hd_cmd *cmd
-//*   DESCRIPTION: 硬盘命令输出
+ //* FUNCTION NAME: hd_cmd_out
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct hd_cmd *cmd
+ //*   DESCRIPTION: 硬盘命令输出
 /*****************************************************************************/
 PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
 {
@@ -245,13 +390,13 @@ PRIVATE void hd_cmd_out(struct hd_cmd *cmd)
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: waitfor
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: int mask
-//*                int val
-//*                int timeout
-//*   DESCRIPTION: 等待硬盘处于某一状态
+ //* FUNCTION NAME: waitfor
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int mask
+ //*                int val
+ //*                int timeout
+ //*   DESCRIPTION: 等待硬盘处于某一状态
 /*****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
@@ -264,11 +409,11 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: interrupt_wait
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: void
-//*   DESCRIPTION: 等待硬盘中断发生
+ //* FUNCTION NAME: interrupt_wait
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 等待硬盘中断发生
 /*****************************************************************************/
 PRIVATE void interrupt_wait()
 {
@@ -277,11 +422,11 @@ PRIVATE void interrupt_wait()
 }
 
 /*****************************************************************************/
-//* FUNCTION NAME: print_identify_info
-//*     PRIVILEGE: 1
-//*   RETURN TYPE: void
-//*    PARAMETERS: u16 *hdinfo
-//*   DESCRIPTION: 打印硬盘信息
+ //* FUNCTION NAME: print_identify_info
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: u16 *hdinfo
+ //*   DESCRIPTION: 打印硬盘信息
 /*****************************************************************************/
 PRIVATE void print_identify_info(u16 *hdinfo)
 {

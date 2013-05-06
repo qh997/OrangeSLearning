@@ -13,6 +13,7 @@ global  enable_irq
 global  disable_int
 global  enable_int
 global  port_read
+global  port_write
 
 disp_str:
     push   ebp
@@ -167,4 +168,13 @@ port_read:
     shr    ecx, 1
     cld
     rep    insw
+    ret
+
+port_write:
+    mov    edx, [esp + 4]
+    mov    edi, [esp + 8]
+    mov    ecx, [esp + 12]
+    shr    ecx, 1
+    cld
+    rep    outsw
     ret

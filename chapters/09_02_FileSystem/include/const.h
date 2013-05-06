@@ -96,7 +96,7 @@
 #define TASK_SYS       1
 #define TASK_HD        2
 #define TASK_FS        3
-
+#define TASK_MM        4
 #define ANY     (NR_TASKS + NR_PROCS + 10)
 #define NO_TASK (NR_TASKS + NR_PROCS + 20)
 
@@ -115,19 +115,34 @@
 enum msgtype {
     HARD_INT = 1,
 
+    /* SYS task */
     GET_TICKS,
 
+    /* message type for drivers */
     DEV_OPEN = 1001,
+    DEV_CLOSE,
+    DEV_READ,
+    DEV_WRITE,
+    DEV_IOCTL,
 };
 
-#define RETVAL u.m3.m3i1
-#define DEVICE u.m3.m3i4
+/* macros for messages */
+#define RETVAL   u.m3.m3i1
+#define REQUEST  u.m3.m3i2
+#define CNT      u.m3.m3i2
+#define PROC_NR  u.m3.m3i3
+#define DEVICE   u.m3.m3i4
+#define POSITION u.m3.m3l1
+#define BUF      u.m3.m3p2
+
+#define DIOCTL_GET_GEO 1
 
 /* hard drive */
 #define SECTOR_SIZE 512
 #define SECTOR_BITS (SECTOR_SIZE * 8)
 #define SECTOR_SIZE_SHIFT 9
 
+/* major device numbers (corresponding to kernel/global.c::dd_map[]) */
 #define DEV_NULL     0
 #define DEV_FLOPPY   1
 #define DEV_CDROM    2
@@ -135,19 +150,23 @@ enum msgtype {
 #define DEV_CHAR_TTY 4
 #define DEV_SCSI     5
 
+/* make device number from major and minor numbers */
 #define MAJOR_SHIFT 8
 #define MAKE_DEV(a, b) ((a << MAJOR_SHIFT) | b)
 
+/* separate major/minor number from device munber */
 #define MAJOR(x) ((x >> MAJOR_SHIFT) & 0xFF)
 #define MINOR(x) (x & 0xFF)
 
-#define MAX_DRIVES 2
-#define NR_SUB_PER_PART 16
-#define NR_PART_PER_DRIVE 4
-#define NR_PRIM_PER_DRIVE (NR_PART_PER_DRIVE + 1)
-#define NR_SUB_PER_DRIVE (NR_SUB_PER_PART * NR_PART_PER_DRIVE)
-#define MAX_PRIM (MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
+#define MAX_DRIVES 2                                           // 最大硬盘数
+#define NR_SUB_PER_PART 16                                     // 扩展分区包含最大逻辑分区数
+#define NR_PART_PER_DRIVE 4                                    // 硬盘包含最大扩展分区数（hd1 ~ hd4）
+#define NR_PRIM_PER_DRIVE (NR_PART_PER_DRIVE + 1)              // 硬盘包含最大主分区数（hd0 ~ hd4）
+#define NR_SUB_PER_DRIVE (NR_SUB_PER_PART * NR_PART_PER_DRIVE) // 硬盘包含最大逻辑分区数
+#define MAX_PRIM (MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)          // 最大主分区号
+#define MAX_SUBPARTITIONS (NR_SUB_PER_DRIVE * MAX_DRIVES)      // 最大逻辑分区数
 
+/* minor numbers of hard disk */
 #define MINOR_hd1a (0x10)
 #define MINOR_hd2a (MINOR_hd1a + NR_SUB_PER_PART)
 
@@ -175,5 +194,8 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define assert(exp) \
     do {} while (0)
 #endif
+
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 #endif
