@@ -99,3 +99,9 @@ PUBLIC int vsprintf(char *buf, const char *fmt, va_list args)
 
     return (p - buf);
 }
+
+PUBLIC int sprintf(char *buf, const char *fmt, ...)
+{
+    va_list arg = (va_list)((char *)(&fmt) + 4);
+    return vsprintf(buf, fmt, arg);
+}

@@ -15,6 +15,7 @@ PUBLIC void task_sys()
                 msg.RETVAL = ticks;
                 send_recv(SEND, src, &msg); // 发送消息
                 break;
+
             default:
                 panic("unknow msg type");
                 break;

@@ -5,8 +5,6 @@ INT_VECTOR_SYS_CALL  equ  0x90
 
 _NR_printx  equ  0
 _NR_sendrec equ  1
-_NR_get_ticks  equ  2
-_NR_write      equ  3
 
 bits  32
 [section .text]

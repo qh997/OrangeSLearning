@@ -152,7 +152,6 @@ PRIVATE void hd_close(int device)
 PRIVATE void hd_rdwt(MESSAGE *p)
 {
     int drive = DRV_OF_DEV(p->DEVICE);
-
     u64 pos = p->POSITION;
     assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
     assert((pos & 0x1FF) == 0);
@@ -174,7 +173,6 @@ PRIVATE void hd_rdwt(MESSAGE *p)
 
     int byte_left = p->CNT;
     void *la = (void *)va2la(p->PROC_NR, p->BUF);
-
     while (byte_left) {
         int bytes = min(SECTOR_SIZE, byte_left);
         if (p->type == DEV_READ) {
@@ -190,8 +188,8 @@ PRIVATE void hd_rdwt(MESSAGE *p)
             interrupt_wait();
         }
 
-        byte_left -= SECTOR_SIZE;
-        la += SECTOR_SIZE;
+        byte_left -= bytes;
+        la += bytes;
     }
 }
 

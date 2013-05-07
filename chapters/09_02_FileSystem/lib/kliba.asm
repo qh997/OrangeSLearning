@@ -85,6 +85,9 @@ disp_color_str:
     pop    ebp
     ret
 
+;==========================================================
+; PUBLIC void out_byte(u16 port, u8 value);
+;==========================================================
 out_byte:
     mov    edx, [esp + 4]
     mov    al, [esp + 8]
@@ -93,6 +96,9 @@ out_byte:
     nop
     ret
 
+;==========================================================
+; PUBLIC u8 in_byte(u16 port);
+;==========================================================
 in_byte:
     mov    edx, [esp + 4]
     xor    eax, eax
@@ -101,6 +107,9 @@ in_byte:
     nop
     ret
 
+;==========================================================
+; PUBLIC int disable_irq(int irq);
+;==========================================================
 disable_irq:
     mov    ecx, [esp + 4]        ; ecx = irq
     pushf                        ;
@@ -132,6 +141,9 @@ disable_irq:
         xor    eax, eax
         ret
 
+;==========================================================
+; PUBLIC void enable_irq(int irq);
+;==========================================================
 enable_irq:
     mov    ecx, [esp + 4]
     pushf
@@ -153,27 +165,39 @@ enable_irq:
         popf
         ret
 
+;==========================================================
+;PUBLIC void disable_int();
+;==========================================================
 disable_int:
     cli
     ret
 
+;==========================================================
+;PUBLIC void enable_int();
+;==========================================================
 enable_int:
     sti
     ret
 
+;==========================================================
+; PUBLIC void port_read(u16 port, void *buf, int n);
+;==========================================================
 port_read:
-    mov    edx, [esp + 4]
-    mov    edi, [esp + 8]
-    mov    ecx, [esp + 12]
+    mov    edx, [esp + 4]  ; port
+    mov    edi, [esp + 8]  ; buf
+    mov    ecx, [esp + 12] ; n
     shr    ecx, 1
     cld
     rep    insw
     ret
 
+;==========================================================
+; PUBLIC void port_write(u16 port, void *buf, int n);
+;==========================================================
 port_write:
-    mov    edx, [esp + 4]
-    mov    edi, [esp + 8]
-    mov    ecx, [esp + 12]
+    mov    edx, [esp + 4]  ; port
+    mov    esi, [esp + 8]  ; buf
+    mov    ecx, [esp + 12] ; n
     shr    ecx, 1
     cld
     rep    outsw

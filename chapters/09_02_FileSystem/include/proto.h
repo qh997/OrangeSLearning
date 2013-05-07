@@ -35,7 +35,7 @@ PUBLIC void put_irq_handler(int irq, irq_handler handler);
 /* kernel.asm */
 void restart();
 
-/* main.c */
+/* kmain.c */
 PUBLIC int kernel_main();
 PUBLIC int get_ticks();
 void TestA();
@@ -50,8 +50,9 @@ PUBLIC void init_clock();
 /* hd.c */
 PUBLIC void task_hd();
 
-/* fs.c */
+/* fs_main.c */
 PUBLIC void task_fs();
+PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void *buf);
 
 /* proc.c */
 PUBLIC void schedule();
@@ -88,6 +89,7 @@ PUBLIC void scroll_screen(CONSOLE *p_con, int direction);
 
 /* vsprintf.c */
 PUBLIC int vsprintf(char *buf, const char *fmt, va_list args);
+PUBLIC int sprintf(char *buf, const char *fmt, ...);
 
 /* printf.c */
 PUBLIC int printf(const char *fmt, ...);
