@@ -10,8 +10,16 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc);
 PRIVATE struct inode *new_inode(int dev, int inode_nr, int start_sect);
 PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename);
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_open
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 被 task_fs 调用
+/*****************************************************************************/
 PUBLIC int do_open()
 {
+    int i = 0;
     int fd = -1; // return value
     char pathname[MAX_PATH];
 
@@ -19,6 +27,7 @@ PUBLIC int do_open()
     int name_len = fs_msg.NAME_LEN;
     int src = fs_msg.source;
 
+    /* 跨越了两个特权级 */
     assert(name_len < MAX_PATH);
     phys_copy(
         (void *)va2la(TASK_FS, pathname),
@@ -27,16 +36,16 @@ PUBLIC int do_open()
     );
     pathname[name_len] = 0;
 
-    int i = 0;
+    /* 先在调用者进程中查找空闲文件描述符 */
     for (i = 0; i < NR_FILES; i++)
         if (pcaller->filp[i] == 0) {
             fd = i;
             break;
         }
-
     if ((fd < 0) || (fd >= NR_FILES))
         panic("filp[] is full (PID:%d)", proc2pid(pcaller));
 
+    /* 然后在 f_desc_table 中查找空闲位置 */
     for (i = 0; i < NR_FILE_DESC; i++)
         if (f_desc_table[i].fd_inode == 0)
             break;
@@ -105,7 +114,15 @@ PUBLIC int do_open()
     return fd;
 }
 
-PRIVATE struct inode * creat_file(char *path, int flags)
+/*****************************************************************************/
+ //* FUNCTION NAME: creat_file
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: struct inode *
+ //*    PARAMETERS: char *path
+ //*                int flags
+ //*   DESCRIPTION: 创建一个新文件
+/*****************************************************************************/
+PRIVATE struct inode *creat_file(char *path, int flags)
 {
     char filename[MAX_PATH];
     struct inode *dir_inode;

@@ -69,15 +69,26 @@ PUBLIC struct super_block *get_super_block(int dev)
     return NULL;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: get_inode
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: struct inode *
+ //*    PARAMETERS: int dev - 设备号
+ //*                int num - inode 序号
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC struct inode *get_inode(int dev, int num)
 {
+    struct inode *q = 0;
+
+    /* 第 0 号 inode 为系统保留 */
     if (num == 0)
         return 0;
 
-    struct inode *p;
-    struct inode *q = 0;
-    for (p = &inode_table[0]; p < &inode_table[NR_INODE]; p++) {
+    /* 先在内存中的 inode_table 里查找 */
+    for (struct inode *p = &inode_table[0]; p < &inode_table[NR_INODE]; p++) {
         if (p->i_cnt) {
+            /* 如果找到了就直接返回 */
             if ((p->i_dev == dev) && (p->i_num == num)) {
                 p->i_cnt++;
                 return p;
@@ -88,16 +99,23 @@ PUBLIC struct inode *get_inode(int dev, int num)
                 q = p;
     }
 
+    /* inode_table 已经满员了 */
     if (!q)
         panic("the inode table is full");
 
+    /* 准备一个新的 inode */
     q->i_dev = dev;
     q->i_num = num;
     q->i_cnt = 1;
 
+    /* 找到第 num 个 inode 所在的扇区 */
     struct super_block *sb = get_super_block(dev);
-    int blk_nr = 1 + 1 + sb->nr_imap_sects + sb->nr_smap_sects
+    int blk_nr = 1 + 1                                     // boot sector + super block
+               + sb->nr_imap_sects                         // + inode map
+               + sb->nr_smap_sects                         // + sector map
                + ((num - 1) / (SECTOR_SIZE / INODE_SIZE));
+
+    /* 读取这个扇区然后找到第 num 个 inode */
     RD_SECT(dev, blk_nr);
     struct inode *pinode = 
         (struct inode *)((u8 *)fsbuf + ((num - 1) % (SECTOR_SIZE / INODE_SIZE)));
@@ -127,6 +145,13 @@ PUBLIC void sync_inode(struct inode * p)
     WR_SECT(p->i_dev, blk_nr);
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: init_fs
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE void init_fs()
 {
     int i;
@@ -163,6 +188,13 @@ PRIVATE void init_fs()
     root_inode = get_inode(ROOT_DEV, ROOT_INODE);
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: read_super_block
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE void mkfs()
 {
     MESSAGE driver_msg;
@@ -287,6 +319,13 @@ PRIVATE void mkfs()
     WR_SECT(ROOT_DEV, sb.n_1st_sect);
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: read_super_block
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int dev
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 读取指定设备的 super block
+/*****************************************************************************/
 PRIVATE void read_super_block(int dev)
 {
     int i;
