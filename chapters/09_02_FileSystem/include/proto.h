@@ -5,6 +5,7 @@
 #include "type.h"
 #include "tty.h"
 #include "proc.h"
+#include "fs.h"
 
 /* kliba.asm */
 PUBLIC void disp_str(char *info);
@@ -50,9 +51,19 @@ PUBLIC void init_clock();
 /* hd.c */
 PUBLIC void task_hd();
 
-/* fs_main.c */
+/* fs/main.c */
 PUBLIC void task_fs();
 PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void *buf);
+PUBLIC struct super_block *get_super_block(int dev);
+PUBLIC struct inode *get_inode(int dev, int num);
+PUBLIC void sync_inode(struct inode * p);
+
+/* fs/open.c */
+PUBLIC int do_open();
+
+/* fs/misc.c */
+PUBLIC int search_file(char *path);
+PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppinode);
 
 /* proc.c */
 PUBLIC void schedule();

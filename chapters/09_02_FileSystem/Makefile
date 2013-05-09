@@ -9,8 +9,18 @@ SHOW_INSTAL := @echo -n ' INSTALL  '; basename
 
 ENTRYPOINT := 0x30400
 
-OUT_DIR := out
-MKDIR_OUT := @mkdir -p $(OUT_DIR)
+KERNEL_PATH := kernel
+LIB_PATH    := lib
+
+OUT_DIR        := out
+OUT_KERNEL_DIR := $(OUT_DIR)/$(KERNEL_PATH)
+OUT_FS_DIR     := $(OUT_DIR)/fs
+OUT_LIB_DIR    := $(OUT_DIR)/$(LIB_PATH)
+
+MKDIR_OUT        := @mkdir -p $(OUT_DIR)
+MKDIR_OUT_KERNEL := @mkdir -p $(OUT_KERNEL_DIR)
+MKDIR_OUT_FS     := @mkdir -p $(OUT_FS_DIR)
+MKDIR_OUT_LIB    := @mkdir -p $(OUT_LIB_DIR)
 
 IMG_FILE := boot.img
 IMG_MOUNT := /mnt/floppy
@@ -26,7 +36,8 @@ HEADS := include/console.h \
          include/proto.h \
          include/string.h \
          include/tty.h \
-         include/type.h
+         include/type.h \
+         include/stdio.h
 
 BOOT_PATH := boot
 BOOT_INC := $(BOOT_PATH)/include
@@ -41,34 +52,36 @@ LOADER_HDR := $(BOOT_INC)/fat12.inc \
               $(BOOT_INC)/ptmode.inc
 LOADER_BIN := $(OUT_DIR)/loader.bin
 
-KERNEL_PATH := kernel
-LIB_PATH := lib
 KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
 KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector -Wall
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
-KERNEL_OBJ := $(OUT_DIR)/kernel.o \
-              $(OUT_DIR)/start.o \
-              $(OUT_DIR)/kliba.o \
-              $(OUT_DIR)/string.o \
-              $(OUT_DIR)/i8259.o \
-              $(OUT_DIR)/protect.o \
-              $(OUT_DIR)/global.o \
-              $(OUT_DIR)/klib.o \
-              $(OUT_DIR)/kmain.o \
-              $(OUT_DIR)/clock.o \
-              $(OUT_DIR)/proc.o \
-              $(OUT_DIR)/syscall.o \
-              $(OUT_DIR)/keyboard.o \
-              $(OUT_DIR)/tty.o \
-              $(OUT_DIR)/console.o \
-              $(OUT_DIR)/vsprintf.o \
-              $(OUT_DIR)/printf.o \
-              $(OUT_DIR)/misc.o \
-              $(OUT_DIR)/systask.o \
-              $(OUT_DIR)/hd.o \
-              $(OUT_DIR)/fs_main.o
+KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
+              $(OUT_KERNEL_DIR)/start.o \
+              $(OUT_LIB_DIR)/kliba.o \
+              $(OUT_LIB_DIR)/string.o \
+              $(OUT_KERNEL_DIR)/i8259.o \
+              $(OUT_KERNEL_DIR)/protect.o \
+              $(OUT_KERNEL_DIR)/global.o \
+              $(OUT_LIB_DIR)/klib.o \
+              $(OUT_KERNEL_DIR)/main.o \
+              $(OUT_KERNEL_DIR)/clock.o \
+              $(OUT_KERNEL_DIR)/proc.o \
+              $(OUT_KERNEL_DIR)/syscall.o \
+              $(OUT_KERNEL_DIR)/keyboard.o \
+              $(OUT_KERNEL_DIR)/tty.o \
+              $(OUT_KERNEL_DIR)/console.o \
+              $(OUT_KERNEL_DIR)/vsprintf.o \
+              $(OUT_KERNEL_DIR)/printf.o \
+              $(OUT_LIB_DIR)/misc.o \
+              $(OUT_KERNEL_DIR)/systask.o \
+              $(OUT_KERNEL_DIR)/hd.o \
+              $(OUT_FS_DIR)/main.o \
+              $(OUT_LIB_DIR)/open.o \
+              $(OUT_LIB_DIR)/close.o \
+              $(OUT_FS_DIR)/open.o \
+              $(OUT_FS_DIR)/misc.o
 
 .PHONY: everytning all init clean install install_boot install_loader install_kernel
 
@@ -82,6 +95,9 @@ init:
 	@echo QH Operating System
 	@echo
 	$(MKDIR_OUT)
+	$(MKDIR_OUT_KERNEL)
+	$(MKDIR_OUT_FS)
+	$(MKDIR_OUT_LIB)
 
 install: install_boot install_loader install_kernel
 
@@ -118,86 +134,102 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(OUT_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sconst.inc
+$(OUT_KERNEL_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/string.o: $(LIB_PATH)/string.asm
+$(OUT_LIB_DIR)/string.o: $(LIB_PATH)/string.asm
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/kliba.o: $(LIB_PATH)/kliba.asm
+$(OUT_LIB_DIR)/kliba.o: $(LIB_PATH)/kliba.asm
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/start.o: $(KERNEL_PATH)/start.c $(HEADS)
+$(OUT_KERNEL_DIR)/start.o: $(KERNEL_PATH)/start.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/i8259.o: $(KERNEL_PATH)/i8259.c $(HEADS)
+$(OUT_KERNEL_DIR)/i8259.o: $(KERNEL_PATH)/i8259.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/protect.o: $(KERNEL_PATH)/protect.c $(HEADS)
+$(OUT_KERNEL_DIR)/protect.o: $(KERNEL_PATH)/protect.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/global.o: $(KERNEL_PATH)/global.c $(HEADS)
+$(OUT_KERNEL_DIR)/global.o: $(KERNEL_PATH)/global.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/klib.o: $(LIB_PATH)/klib.c $(HEADS)
+$(OUT_LIB_DIR)/klib.o: $(LIB_PATH)/klib.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/kmain.o: $(KERNEL_PATH)/kmain.c $(HEADS)
+$(OUT_KERNEL_DIR)/main.o: $(KERNEL_PATH)/main.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/clock.o: $(KERNEL_PATH)/clock.c $(HEADS)
+$(OUT_KERNEL_DIR)/clock.o: $(KERNEL_PATH)/clock.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/proc.o: $(KERNEL_PATH)/proc.c $(HEADS)
+$(OUT_KERNEL_DIR)/proc.o: $(KERNEL_PATH)/proc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sconst.inc
+$(OUT_KERNEL_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
-$(OUT_DIR)/keyboard.o: $(KERNEL_PATH)/keyboard.c $(HEADS)
+$(OUT_KERNEL_DIR)/keyboard.o: $(KERNEL_PATH)/keyboard.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/tty.o: $(KERNEL_PATH)/tty.c $(HEADS)
+$(OUT_KERNEL_DIR)/tty.o: $(KERNEL_PATH)/tty.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/console.o: $(KERNEL_PATH)/console.c $(HEADS)
+$(OUT_KERNEL_DIR)/console.o: $(KERNEL_PATH)/console.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/vsprintf.o: $(KERNEL_PATH)/vsprintf.c $(HEADS)
+$(OUT_KERNEL_DIR)/vsprintf.o: $(KERNEL_PATH)/vsprintf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
+$(OUT_KERNEL_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/misc.o: $(LIB_PATH)/misc.c $(HEADS)
+$(OUT_LIB_DIR)/misc.o: $(LIB_PATH)/misc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/systask.o: $(KERNEL_PATH)/systask.c $(HEADS)
+$(OUT_KERNEL_DIR)/systask.o: $(KERNEL_PATH)/systask.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/hd.o: $(KERNEL_PATH)/hd.c $(HEADS)
+$(OUT_KERNEL_DIR)/hd.o: $(KERNEL_PATH)/hd.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_DIR)/fs_main.o: fs/fs_main.c $(HEADS)
+$(OUT_FS_DIR)/main.o: fs/main.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/open.o: $(LIB_PATH)/open.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/close.o: $(LIB_PATH)/close.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_FS_DIR)/open.o: fs/open.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_FS_DIR)/misc.o: fs/misc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

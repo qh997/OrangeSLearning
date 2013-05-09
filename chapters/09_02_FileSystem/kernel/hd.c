@@ -2,6 +2,7 @@
 #include "proto.h"
 #include "hd.h"
 #include "string.h"
+#include "stdio.h"
 
 PRIVATE void init_hd();
 PRIVATE void hd_open(int device);

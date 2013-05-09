@@ -3,6 +3,7 @@
 
 #include "type.h"
 #include "protect.h"
+#include "const.h"
 
 typedef struct strackframe {
     u32 gs;         // ┓
@@ -46,6 +47,8 @@ typedef struct proc {
     struct proc *next_sending;
 
     int nr_tty;
+
+    struct file_desc *filp[NR_FILES];
 } PROCESS;
 
 typedef struct task {

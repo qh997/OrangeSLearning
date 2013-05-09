@@ -478,7 +478,7 @@ PRIVATE int msg_receive(PROCESS *current, int src, MESSAGE *m)
         assert(p_who_wanna_recv->p_msg != 0);
         assert(p_who_wanna_recv->p_recvfrom != NO_TASK);
         assert(p_who_wanna_recv->p_sendto == NO_TASK);
-        assert(p_who_wanna_recv->q_sending == 0);
+        assert(p_who_wanna_recv->has_int_msg == 0);
     }
 
     return 0;

@@ -52,7 +52,7 @@ struct dir_entry {
 struct file_desc {
     int fd_mode;
     int fd_pos;
-    struct inode *fd_onode;
+    struct inode *fd_inode;
 };
 
 #define RD_SECT(dev, sect_nr) \

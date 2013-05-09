@@ -1,12 +1,7 @@
 #ifndef _KERL__CONST_H_
 #define _KERL__CONST_H_
 
-#include "proc.h"
 #include "config.h"
-
-#define EXTERN extern
-#define PUBLIC
-#define PRIVATE static
 
 #define STR_DEFAULT_LEN 1024
 
@@ -118,6 +113,18 @@ enum msgtype {
     /* SYS task */
     GET_TICKS,
 
+    /* FS */
+    OPEN,
+    CLOSE,
+    READ,
+    WRITE,
+    LSEEK,
+    STAT,
+    UNLINK,
+
+    /* TTY, SYS, FS, MM, etc */
+    SYSCALL_RET,
+
     /* message type for drivers */
     DEV_OPEN = 1001,
     DEV_CLOSE,
@@ -128,11 +135,15 @@ enum msgtype {
 
 /* macros for messages */
 #define RETVAL   u.m3.m3i1
+#define FD       u.m3.m3i1
+#define FLAGS    u.m3.m3i1
 #define REQUEST  u.m3.m3i2
 #define CNT      u.m3.m3i2
+#define NAME_LEN u.m3.m3i2
 #define PROC_NR  u.m3.m3i3
 #define DEVICE   u.m3.m3i4
 #define POSITION u.m3.m3l1
+#define PATHNAME u.m3.m3p1
 #define BUF      u.m3.m3p2
 
 #define DIOCTL_GET_GEO 1
@@ -176,10 +187,16 @@ enum msgtype {
 #define P_EXTENDED  1
 
 #define QHS_OART 0x99
-#define NO_PART 0x00
+#define NO_PART  0x00
 #define EXT_PART 0x05
 
-#define ROOT_INODE 1
+#define INVALID_INODE 0
+#define ROOT_INODE    1
+
+#define NR_FILES       64
+#define NR_FILE_DESC   64
+#define NR_SUPER_BLOCK  8
+#define NR_INODE       64
 
 /* INODE::i_mode (octal, lower 12 bits reserved) */
 #define I_TYPE_MASK     0170000
@@ -194,20 +211,8 @@ enum msgtype {
 #define enable_interrupt() __asm__("sti")
 #define disable_interrupt() __asm__("cli")
 
-#define ASSERT
-#ifdef ASSERT
-void assertion_failure(char *exp, char *file, char *base_file, int line);
-#define assert(exp) \
-    do { \
-        if (!(exp)) \
-            assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__); \
-    } while (0)
-#else
-#define assert(exp) \
-    do {} while (0)
-#endif
-
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+#include "proc.h"
 #endif

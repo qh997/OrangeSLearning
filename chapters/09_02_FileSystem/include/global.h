@@ -8,6 +8,7 @@
 #include "tty.h"
 #include "console.h"
 #include "fs.h"
+#include "stdio.h"
 
 #ifdef GLOBAL_VARIABLES_HERE
 #undef  EXTERN
@@ -42,5 +43,12 @@ extern CONSOLE console_table[];
 extern struct dev_drv_map dd_map[];
 extern u8 * fsbuf;
 extern const int FSBUF_SIZE;
+
+EXTERN MESSAGE fs_msg;
+EXTERN struct proc *pcaller;
+EXTERN struct file_desc f_desc_table[NR_FILE_DESC];
+EXTERN struct inode *root_inode;
+EXTERN struct super_block super_block[NR_SUPER_BLOCK];
+EXTERN struct inode inode_table[NR_INODE];
 
 #endif
