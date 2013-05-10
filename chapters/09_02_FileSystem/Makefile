@@ -86,7 +86,9 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_FS_DIR)/misc.o \
               $(OUT_FS_DIR)/read_write.o \
               $(OUT_LIB_DIR)/write.o \
-              $(OUT_LIB_DIR)/read.o
+              $(OUT_LIB_DIR)/read.o \
+              $(OUT_FS_DIR)/link.o \
+              $(OUT_LIB_DIR)/unlink.o
 
 .PHONY: everytning all init clean install install_boot install_loader install_kernel
 
@@ -248,5 +250,13 @@ $(OUT_LIB_DIR)/write.o: $(LIB_PATH)/write.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_LIB_DIR)/read.o: $(LIB_PATH)/read.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_FS_DIR)/link.o: fs/link.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/unlink.o: $(LIB_PATH)/unlink.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

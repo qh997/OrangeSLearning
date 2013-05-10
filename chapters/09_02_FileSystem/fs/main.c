@@ -41,6 +41,10 @@ PUBLIC void task_fs()
                 fs_msg.CNT = do_rdwt();
                 break;
 
+            case UNLINK:
+                fs_msg.RETVAL = do_unlink();
+                break;
+
             default:
                 dump_msg("FS::unknown message:", &fs_msg);
                 assert(0);

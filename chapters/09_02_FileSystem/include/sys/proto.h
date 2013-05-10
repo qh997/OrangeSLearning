@@ -66,6 +66,9 @@ PUBLIC int do_close();
 /* fs/read_write.c */
 PUBLIC int do_rdwt();
 
+/* fs/link.c */
+PUBLIC int do_unlink();
+
 /* fs/misc.c */
 PUBLIC int search_file(char *path);
 PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppinode);

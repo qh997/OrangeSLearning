@@ -147,11 +147,25 @@ void TestA()
 
     close(fd);
 
+    fd = open("gengs", O_RDWR);
+
+    if (fd != -1) {
+        char buf_g[12];
+        read(fd, buf_g, 12);
+        printf("gengs: %s", buf_g);
+    }
+    else
+        printf("file gengs not exists\n");
+
     spin("TestA");
 }
 
 void TestB()
 {
+    int fd = open("gengs", O_CREAT | O_RDWR);
+    write(fd, "qh997 12345", 11);
+    close(fd);
+
     int i = 0;
     while(1) {
         assert(i++ <= 10);
