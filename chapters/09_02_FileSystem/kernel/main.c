@@ -118,15 +118,36 @@ PUBLIC int get_ticks()
 
 void TestA()
 {
-    int fd = open("/blah", O_CREAT);
-    printf("fd: %d\n", fd);
-    close(fd);
-    spin("TestA");
+    int fd;
+    int n;
+    const char filename[] = "blah";
+    const char bufw[] = "abcde";
+    const int rd_bytes = 3;
+    char bufr[rd_bytes];
 
-    while(1) {
-        printf("<Ticks:%x>", get_ticks());
-        milli_delay(2000);
-    }
+    assert(rd_bytes <= strlen(bufw));
+
+    fd = open(filename, O_CREAT | O_RDWR);
+    assert(fd != -1);
+    printf("File created. fd: %d\n", fd);
+
+    n = write(fd, bufw, strlen(bufw));
+    assert(n == strlen(bufw));
+
+    close(fd);
+
+    fd = open(filename, O_RDWR);
+    assert(fd != -1);
+    printf("File opened. fd: %d\n", fd);
+
+    n = read(fd, bufr, rd_bytes);
+    assert(n == rd_bytes);
+    bufr[n] = 0;
+    printf("%d bytes read: %s\n", n, bufr);
+
+    close(fd);
+
+    spin("TestA");
 }
 
 void TestB()
@@ -134,7 +155,7 @@ void TestB()
     int i = 0;
     while(1) {
         assert(i++ <= 10);
-        printf("B");
+        printf("<B Ticks:%x>", get_ticks());
         milli_delay(1000);
     }
 }
