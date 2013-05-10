@@ -1,7 +1,7 @@
-#include "const.h"
-#include "console.h"
-#include "global.h"
-#include "proto.h"
+#include "sys/const.h"
+#include "sys/console.h"
+#include "sys/global.h"
+#include "sys/proto.h"
 
 PRIVATE void set_cursor(unsigned int position);
 PRIVATE void flush(CONSOLE *p_con);

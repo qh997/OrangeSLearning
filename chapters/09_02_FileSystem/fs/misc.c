@@ -1,9 +1,9 @@
-#include "const.h"
+#include "sys/const.h"
 #include "stdio.h"
-#include "fs.h"
+#include "sys/fs.h"
 #include "string.h"
-#include "proto.h"
-#include "global.h"
+#include "sys/proto.h"
+#include "sys/global.h"
 
 /*****************************************************************************/
  //* FUNCTION NAME: search_file

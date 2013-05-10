@@ -1,7 +1,7 @@
 #ifndef _KERL__CONSOLE_H_
 #define _KERL__CONSOLE_H_
 
-#include "const.h"
+#include "sys/const.h"
 
 typedef struct s_console
 {

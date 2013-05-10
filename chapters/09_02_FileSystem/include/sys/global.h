@@ -1,13 +1,13 @@
 #ifndef _KERL__GLOBAL_H_
 #define _KERL__GLOBAL_H_
 
-#include "const.h"
+#include "sys/const.h"
 #include "type.h"
-#include "protect.h"
-#include "proc.h"
-#include "tty.h"
-#include "console.h"
-#include "fs.h"
+#include "sys/protect.h"
+#include "sys/proc.h"
+#include "sys/tty.h"
+#include "sys/console.h"
+#include "sys/fs.h"
 #include "stdio.h"
 
 #ifdef GLOBAL_VARIABLES_HERE

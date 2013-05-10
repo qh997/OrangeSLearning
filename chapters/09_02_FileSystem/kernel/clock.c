@@ -1,7 +1,7 @@
 
-#include "const.h"
-#include "proto.h"
-#include "global.h"
+#include "sys/const.h"
+#include "sys/proto.h"
+#include "sys/global.h"
 
 PUBLIC void clock_handler(int irq)
 {

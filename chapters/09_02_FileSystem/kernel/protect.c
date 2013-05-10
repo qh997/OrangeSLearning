@@ -1,8 +1,8 @@
-#include "const.h"
+#include "sys/const.h"
 #include "type.h"
-#include "protect.h"
-#include "global.h"
-#include "proto.h"
+#include "sys/protect.h"
+#include "sys/global.h"
+#include "sys/proto.h"
 #include "string.h"
 
 void divide_error();

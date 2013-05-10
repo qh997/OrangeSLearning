@@ -1,5 +1,5 @@
 
-%include "sconst.inc"
+%include "sys/sconst.inc"
 
 extern  disp_pos
 

@@ -1,7 +1,7 @@
 #ifndef _KERL__KEYMAP_H_
 #define _KERL__KEYMAP_H_
 
-#include "keyboard.h"
+#include "sys/keyboard.h"
 
 u32 keymap[NR_SCAN_CODES * MAP_COLS] = {
 /* scan-code                   !Shift          Shift          E0 XX */

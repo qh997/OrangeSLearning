@@ -1,8 +1,8 @@
-#include "const.h"
+#include "sys/const.h"
 #include "stdio.h"
-#include "global.h"
+#include "sys/global.h"
 #include "string.h"
-#include "proto.h"
+#include "sys/proto.h"
 
 PRIVATE struct inode * creat_file(char *path, int flags);
 PRIVATE int alloc_imap_bit(int dev);

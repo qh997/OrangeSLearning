@@ -1,5 +1,5 @@
 
-%include "sconst.inc"
+%include "sys/sconst.inc"
 
 SELECTOR_KERNEL_CS  equ  8 ; LABEL_DESC_FLAT_C  - LABEL_GDT = 8
 

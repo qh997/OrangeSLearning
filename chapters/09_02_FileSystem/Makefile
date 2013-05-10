@@ -25,17 +25,19 @@ MKDIR_OUT_LIB    := @mkdir -p $(OUT_LIB_DIR)
 IMG_FILE := boot.img
 IMG_MOUNT := /mnt/floppy
 
-HEADS := include/console.h \
-         include/const.h \
-         include/global.h \
-         include/hd.h \
-         include/keyboard.h \
-         include/keymap.h \
-         include/proc.h \
-         include/protect.h \
-         include/proto.h \
+HEADS := include/sys/config.h \
+         include/sys/console.h \
+         include/sys/const.h \
+         include/sys/fs.h \
+         include/sys/global.h \
+         include/sys/hd.h \
+         include/sys/keyboard.h \
+         include/sys/keymap.h \
+         include/sys/proc.h \
+         include/sys/protect.h \
+         include/sys/proto.h \
+         include/sys/tty.h \
          include/string.h \
-         include/tty.h \
          include/type.h \
          include/stdio.h
 
@@ -134,7 +136,7 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(OUT_KERNEL_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sconst.inc
+$(OUT_KERNEL_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sys/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 
@@ -178,7 +180,7 @@ $(OUT_KERNEL_DIR)/proc.o: $(KERNEL_PATH)/proc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_KERNEL_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sconst.inc
+$(OUT_KERNEL_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sys/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 

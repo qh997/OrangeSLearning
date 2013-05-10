@@ -1,8 +1,8 @@
 #include "type.h"
-#include "proto.h"
-#include "const.h"
-#include "protect.h"
-#include "global.h"
+#include "sys/proto.h"
+#include "sys/const.h"
+#include "sys/protect.h"
+#include "sys/global.h"
 
 PRIVATE void spurious_irq(int irq);
 

@@ -1,9 +1,9 @@
 #include "type.h"
-#include "const.h"
-#include "protect.h"
+#include "sys/const.h"
+#include "sys/protect.h"
 #include "string.h"
-#include "proto.h"
-#include "global.h"
+#include "sys/proto.h"
+#include "sys/global.h"
 
 /*****************************************************************************/
 //* FUNCTION NAME: cstart

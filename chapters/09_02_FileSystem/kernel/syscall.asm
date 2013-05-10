@@ -1,5 +1,5 @@
 
-%include  "sconst.inc"
+%include  "sys/sconst.inc"
 
 INT_VECTOR_SYS_CALL  equ  0x90
 

@@ -2,8 +2,8 @@
 #define _KERL__PROC_H_
 
 #include "type.h"
-#include "protect.h"
-#include "const.h"
+#include "sys/protect.h"
+#include "sys/const.h"
 
 typedef struct strackframe {
     u32 gs;         // ┓

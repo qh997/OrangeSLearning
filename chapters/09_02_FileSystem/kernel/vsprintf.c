@@ -1,6 +1,6 @@
-#include "const.h"
+#include "sys/const.h"
 #include "type.h"
-#include "proto.h"
+#include "sys/proto.h"
 #include "string.h"
 
 PRIVATE char *i2a(int val, int base, char ** ps)
