@@ -74,8 +74,8 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_KERNEL_DIR)/keyboard.o \
               $(OUT_KERNEL_DIR)/tty.o \
               $(OUT_KERNEL_DIR)/console.o \
-              $(OUT_KERNEL_DIR)/vsprintf.o \
-              $(OUT_KERNEL_DIR)/printf.o \
+              $(OUT_LIB_DIR)/vsprintf.o \
+              $(OUT_LIB_DIR)/printf.o \
               $(OUT_LIB_DIR)/misc.o \
               $(OUT_KERNEL_DIR)/systask.o \
               $(OUT_KERNEL_DIR)/hd.o \
@@ -199,11 +199,11 @@ $(OUT_KERNEL_DIR)/console.o: $(KERNEL_PATH)/console.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_KERNEL_DIR)/vsprintf.o: $(KERNEL_PATH)/vsprintf.c $(HEADS)
+$(OUT_LIB_DIR)/vsprintf.o: $(LIB_PATH)/vsprintf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_KERNEL_DIR)/printf.o: $(KERNEL_PATH)/printf.c $(HEADS)
+$(OUT_LIB_DIR)/printf.o: $(LIB_PATH)/printf.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
