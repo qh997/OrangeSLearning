@@ -33,6 +33,7 @@ PUBLIC void task_fs()
                 break;
 
             case CLOSE:
+                fs_msg.RETVAL = do_close();
                 break;
 
             default:
@@ -140,6 +141,12 @@ PUBLIC struct inode *get_inode(int dev, int num)
     q->i_cnt = 1;
 
     return q;
+}
+
+PUBLIC void put_inode(struct inode *pinode)
+{
+    assert(pinode->i_cnt > 0);
+    pinode->i_cnt--;
 }
 
 /*****************************************************************************/

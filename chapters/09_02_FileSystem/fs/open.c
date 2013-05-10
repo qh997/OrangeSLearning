@@ -109,6 +109,16 @@ PUBLIC int do_open()
     return fd;
 }
 
+PUBLIC int do_close()
+{
+    int fd = fs_msg.FD;
+    put_inode(pcaller->filp[fd]->fd_inode);
+    pcaller->filp[fd]->fd_inode = 0;
+    pcaller->filp[fd] = 0;
+
+    return 0;
+}
+
 /*****************************************************************************/
  //* FUNCTION NAME: creat_file
  //*     PRIVILEGE: 0
