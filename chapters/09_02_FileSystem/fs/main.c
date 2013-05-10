@@ -8,6 +8,13 @@ PRIVATE void init_fs();
 PRIVATE void mkfs();
 PRIVATE void read_super_block(int dev);
 
+/*****************************************************************************/
+ //* FUNCTION NAME: task_fs
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: FS 主进程
+/*****************************************************************************/
 PUBLIC void task_fs()
 {
     printl("Task FS begins.\n");
@@ -57,6 +64,13 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void
     return 0;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: get_super_block
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: super_block *
+ //*    PARAMETERS: int dev - 设备号
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC struct super_block *get_super_block(int dev)
 {
     struct super_block *sb = super_block;
@@ -75,7 +89,7 @@ PUBLIC struct super_block *get_super_block(int dev)
  //*   RETURN TYPE: struct inode *
  //*    PARAMETERS: int dev - 设备号
  //*                int num - inode 序号
- //*   DESCRIPTION: 
+ //*   DESCRIPTION: 在 dev 上取出地第 num 个 inode
 /*****************************************************************************/
 PUBLIC struct inode *get_inode(int dev, int num)
 {
@@ -103,11 +117,6 @@ PUBLIC struct inode *get_inode(int dev, int num)
     if (!q)
         panic("the inode table is full");
 
-    /* 准备一个新的 inode */
-    q->i_dev = dev;
-    q->i_num = num;
-    q->i_cnt = 1;
-
     /* 找到第 num 个 inode 所在的扇区 */
     struct super_block *sb = get_super_block(dev);
     int blk_nr = 1 + 1                                     // boot sector + super block
@@ -120,24 +129,41 @@ PUBLIC struct inode *get_inode(int dev, int num)
     struct inode *pinode = 
         (struct inode *)((u8 *)fsbuf + ((num - 1) % (SECTOR_SIZE / INODE_SIZE)));
 
+    /* 准备一个新的 inode */
     q->i_mode = pinode->i_mode;
     q->i_size = pinode->i_size;
     q->i_start_sect = pinode->i_start_sect;
     q->i_nr_sects = pinode->i_nr_sects;
 
+    q->i_dev = dev;
+    q->i_num = num;
+    q->i_cnt = 1;
+
     return q;
 }
 
-PUBLIC void sync_inode(struct inode * p)
+/*****************************************************************************/
+ //* FUNCTION NAME: sync_inode
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct inode * p
+ //*   DESCRIPTION: 同步 inode 到磁盘
+/*****************************************************************************/
+PUBLIC void sync_inode(struct inode *p)
 {
-    struct inode * pinode;
-    struct super_block * sb = get_super_block(p->i_dev);
-    int blk_nr = 1 + 1 + sb->nr_imap_sects + sb->nr_smap_sects +
-        ((p->i_num - 1) / (SECTOR_SIZE / INODE_SIZE));
+    /* 读取该 inode 所在的扇区 */
+    struct super_block *sb = get_super_block(p->i_dev);
+    int blk_nr = 1 + 1
+               + sb->nr_imap_sects
+               + sb->nr_smap_sects
+               + ((p->i_num - 1) / (SECTOR_SIZE / INODE_SIZE));
     RD_SECT(p->i_dev, blk_nr);
-    pinode = (struct inode*)((u8*)fsbuf +
-                 (((p->i_num - 1) % (SECTOR_SIZE / INODE_SIZE))
-                  * INODE_SIZE));
+
+    /* 更新 inode 信息 */
+    struct inode *pinode = (struct inode *)(
+        (u8 *)fsbuf
+        + (((p->i_num - 1) % (SECTOR_SIZE / INODE_SIZE)) * INODE_SIZE)
+    );
     pinode->i_mode = p->i_mode;
     pinode->i_size = p->i_size;
     pinode->i_start_sect = p->i_start_sect;

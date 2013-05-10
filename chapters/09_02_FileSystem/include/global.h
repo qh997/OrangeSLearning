@@ -46,9 +46,8 @@ extern const int FSBUF_SIZE;
 
 EXTERN MESSAGE fs_msg;
 EXTERN struct proc *pcaller;
-EXTERN struct file_desc f_desc_table[NR_FILE_DESC];
 EXTERN struct inode *root_inode;
 EXTERN struct super_block super_block[NR_SUPER_BLOCK];
-EXTERN struct inode inode_table[NR_INODE];
-
+EXTERN struct inode       inode_table[NR_INODE];
+EXTERN struct file_desc   f_desc_table[NR_FILE_DESC];
 #endif

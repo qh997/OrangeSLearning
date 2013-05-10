@@ -79,11 +79,9 @@ PUBLIC int do_open()
         pcaller->filp[fd] = &f_desc_table[i];
 
         /* connects file_descriptor with inode */
-        f_desc_table[i].fd_inode = pin;
-
         f_desc_table[i].fd_mode = flags;
-        /* f_desc_table[i].fd_cnt = 1; */
         f_desc_table[i].fd_pos = 0;
+        f_desc_table[i].fd_inode = pin;
 
         int imode = pin->i_mode & I_TYPE_MASK;
 
@@ -96,9 +94,7 @@ PUBLIC int do_open()
             assert(MAJOR(dev) == 4);
             assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 
-            send_recv(BOTH,
-                  dd_map[MAJOR(dev)].driver_nr,
-                  &driver_msg);
+            send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
         }
         else if (imode == I_DIRECTORY) {
             assert(pin->i_num == ROOT_INODE);
@@ -107,9 +103,8 @@ PUBLIC int do_open()
             assert(pin->i_mode == I_REGULAR);
         }
     }
-    else {
+    else
         return -1;
-    }
 
     return fd;
 }
@@ -139,25 +134,34 @@ PRIVATE struct inode *creat_file(char *path, int flags)
     return newino;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: alloc_imap_bit
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: int dev
+ //*   DESCRIPTION: 分配一个 inode 号
+/*****************************************************************************/
 PRIVATE int alloc_imap_bit(int dev)
 {
     int inode_nr = 0;
-    int imap_blk0_nr = 1 + 1;
-    struct super_block * sb = get_super_block(dev);
+    int imap_blk0_nr = 1 + 1; // boot sector + super block
+    struct super_block *sb = get_super_block(dev);
 
-    for (int i = 0; i < sb->nr_imap_sects; i++) {
+    for (int i = 0; i < sb->nr_imap_sects; i++) { // 逐扇区遍历 inode map
         RD_SECT(dev, imap_blk0_nr + i);
 
-        for (int j = 0; j < SECTOR_SIZE; j++) {
+        for (int j = 0; j < SECTOR_SIZE; j++) { // 逐字节
+            /* 跳过已经使用的（1：使用；0：未使用） */
             if (fsbuf[j] == 0xFF)
                 continue;
 
             int k = 0;
-            for (k = 0; ((fsbuf[j] >> k) & 1) != 0; k++);
+            for (k = 0; ((fsbuf[j] >> k) & 1) != 0; k++); // 逐位（一位代表一个 inode）
 
             inode_nr = (i * SECTOR_SIZE + j) * 8 + k;
             fsbuf[j] |= (1 << k);
 
+            /* 将更新后的 inode map 写入磁盘 */
             WR_SECT(dev, imap_blk0_nr + i);
             break;
         }
@@ -170,21 +174,29 @@ PRIVATE int alloc_imap_bit(int dev)
     return 0;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: alloc_smap_bit
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: int dev
+ //*                int nr_sects_to_alloc
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
 {
     struct super_block *sb = get_super_block(dev);
-    int smap_blk0_nr = 1 + 1 + sb->nr_imap_sects;
-    int free_sect_nr = 0;
+    int smap_blk0_nr = 1 + 1 + sb->nr_imap_sects; // boot sector + super block + inode map
+    int free_sect_nr = 0; // 空闲 sector 起始号
 
-    for (int i = 0; i < sb->nr_smap_sects; i++) {
+    for (int i = 0; i < sb->nr_smap_sects; i++) { // 逐扇区遍历 sector map
         RD_SECT(dev, smap_blk0_nr + i);
 
-        for (int j = 0; j < SECTOR_SIZE && nr_sects_to_alloc > 0; j++) {
+        for (int j = 0; j < SECTOR_SIZE && nr_sects_to_alloc > 0; j++) { // 逐字节
             int k = 0;
             if (!free_sect_nr) {
                 if (fsbuf[j] == 0xFF)
                     continue;
-                for (; ((fsbuf[j] >> k) & 1) != 0; k++);
+                for (; ((fsbuf[j] >> k) & 1) != 0; k++); // 逐位（一位代表一个扇区）
 
                 free_sect_nr = (i * SECTOR_SIZE + j) * 8
                              + k - 1 + sb->n_1st_sect;
@@ -198,6 +210,7 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
             }
         }
 
+        /* 将更新后的 sector map 扇区写入磁盘 */
         if (free_sect_nr)
             WR_SECT(dev, smap_blk0_nr + i);
 
@@ -210,11 +223,20 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
     return free_sect_nr;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: new_inode
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: struct inode *
+ //*    PARAMETERS: int dev
+ //*                int inode_nr
+ //*                int start_sect
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE struct inode *new_inode(int dev, int inode_nr, int start_sect)
 {
     struct inode *new_inode = get_inode(dev, inode_nr);
 
-    new_inode->i_mode = I_REGULAR;
+    new_inode->i_mode = I_REGULAR; // 0x00008000
     new_inode->i_size = 0;
     new_inode->i_start_sect = start_sect;
     new_inode->i_nr_sects = NR_DEFAULT_FILE_SECTS;
