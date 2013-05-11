@@ -3,6 +3,13 @@
 #include "sys/proto.h"
 #include "string.h"
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_rdwt
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: int  - 读、写的字节数
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC int do_rdwt()
 {
     int fd = fs_msg.FD;
@@ -10,6 +17,7 @@ PUBLIC int do_rdwt()
     int len = fs_msg.CNT;
     int src = fs_msg.source;
 
+    /* 保证 fd 指向的是合法文件描述符 */
     assert((pcaller->filp[fd] >= &f_desc_table[0]) && 
            (pcaller->filp[fd] <  &f_desc_table[NR_FILE_DESC]));
 
@@ -20,11 +28,12 @@ PUBLIC int do_rdwt()
 
     struct inode *pin = pcaller->filp[fd]->fd_inode;
 
+    /* 保证 fd 指向的是合法 inode */
     assert(pin >= &inode_table[0] && pin < &inode_table[NR_INODE]);
 
     int imode = pin->i_mode & I_TYPE_MASK;
 
-    if (imode == I_CHAR_SPECIAL) {
+    if (imode == I_CHAR_SPECIAL) { // 如果是字符设备则向该设备驱动发送消息
         int t = fs_msg.type == READ ? DEV_READ : DEV_WRITE;
         fs_msg.type = t;
 
@@ -59,7 +68,7 @@ PUBLIC int do_rdwt()
 
         int bytes_rw = 0;
         int bytes_left = len;
-        for (int i = rw_sect_min; i <= rw_sect_max; i += chunk) {
+        for (int i = rw_sect_min; i <= rw_sect_max; i += chunk) { // 逐块
             int bytes = min(bytes_left, chunk * SECTOR_SIZE - off);
             rw_sector(
                 DEV_READ,

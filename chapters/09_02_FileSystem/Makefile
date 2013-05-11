@@ -2,10 +2,10 @@ ASM := nasm
 CC := gcc
 LD := ld
 
-SHOW_ASMCPL := @echo -n '   ASM    '; basename
-SHOW_CCCPL  := @echo -n '    CC    '; basename
-SHOW_LDLNK  := @echo -n '    LD    '; basename
-SHOW_INSTAL := @echo -n ' INSTALL  '; basename
+SHOW_ASMCPL := @echo -n ' COMPILE   ASM    '; echo
+SHOW_CCCPL  := @echo -n ' COMPILE    CC    '; echo 
+SHOW_LDLNK  := @echo -n ' LINK       LD    '; echo
+SHOW_INSTAL := @echo -n ' INSTALL  '; echo
 
 ENTRYPOINT := 0x30400
 

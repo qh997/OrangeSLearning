@@ -161,10 +161,10 @@ PUBLIC void keyboard_read(TTY *p_tty)
             }
 
             if (make) {
-                int pad = 0;
+                //int pad = 0;
 
                 if ((key >= PAD_SLASH) && (key <= PAD_9)) {
-                    pad = 1;
+                    //pad = 1;
                     switch (key) {
                         case PAD_SLASH:
                             key = '/';

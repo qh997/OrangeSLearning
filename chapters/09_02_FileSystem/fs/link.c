@@ -4,17 +4,26 @@
 #include "stdio.h"
 #include "sys/global.h"
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_unlink
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC int do_unlink()
 {
     char pathname[MAX_PATH];
 
     /* get parameters from the message */
-    int name_len = fs_msg.NAME_LEN; /* length of filename */
-    int src = fs_msg.source;    /* caller proc nr. */
+    int name_len = fs_msg.NAME_LEN; // length of filename
+    int src = fs_msg.source;        // caller proc nr.
     assert(name_len < MAX_PATH);
-    phys_copy((void*)va2la(TASK_FS, pathname),
-          (void*)va2la(src, fs_msg.PATHNAME),
-          name_len);
+    phys_copy(
+        (void*)va2la(TASK_FS, pathname),
+        (void*)va2la(src, fs_msg.PATHNAME),
+        name_len
+    );
     pathname[name_len] = 0;
 
     if (strcmp(pathname , "/") == 0) {
@@ -30,11 +39,11 @@ PUBLIC int do_unlink()
     }
 
     char filename[MAX_PATH];
-    struct inode * dir_inode;
+    struct inode *dir_inode;
     if (strip_path(filename, pathname, &dir_inode) != 0)
         return -1;
 
-    struct inode * pin = get_inode(dir_inode->i_dev, inode_nr);
+    struct inode *pin = get_inode(dir_inode->i_dev, inode_nr);
 
     if (pin->i_mode != I_REGULAR) { /* can only remove regular files */
         printl("cannot remove file %s, because "
@@ -49,7 +58,7 @@ PUBLIC int do_unlink()
         return -1;
     }
 
-    struct super_block * sb = get_super_block(pin->i_dev);
+    struct super_block *sb = get_super_block(pin->i_dev);
 
     /*************************/
     /* free the bit in i-map */

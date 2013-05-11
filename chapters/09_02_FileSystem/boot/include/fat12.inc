@@ -1,6 +1,6 @@
 
 ; FAT12
-    BS_OEMName      DB  'ForrestY'     ; OEM String, 必须 8 个字节
+    BS_OEMName      DB  'QH GENGS'     ; OEM String, 必须 8 个字节
     BPB_BytsPerSec  DW  512            ; 每扇区字节数
     BPB_SecPerClus  DB  1              ; 每簇多少扇区
     BPB_RsvdSecCnt  DW  1              ; Boot 记录占用多少扇区
@@ -17,7 +17,7 @@
     BS_Reserved1    DB  0              ; 未使用
     BS_BootSig      DB  29h            ; 扩展引导标记 (29h)
     BS_VolID        DD  0              ; 卷序列号
-    BS_VolLab       DB  'OrangeS0.02'  ; 卷标, 必须 11 个字节
+    BS_VolLab       DB  'ZDDDDHZZ.01'  ; 卷标, 必须 11 个字节
     BS_FileSysType  DB  'FAT12   '     ; 文件系统类型, 必须 8个字节
 
 SectorNoOfRootDir        equ  19  ; 根目录区的第一个扇区号

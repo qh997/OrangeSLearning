@@ -58,6 +58,18 @@ PUBLIC void task_fs()
     spin("FS");
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: rw_sector
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: int io_type
+ //*                int dev
+ //*                u64 pos
+ //*                int bytes
+ //*                int proc_nr
+ //*                void *buf
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void *buf)
 {
     MESSAGE driver_msg;
@@ -99,7 +111,8 @@ PUBLIC struct super_block *get_super_block(int dev)
  //*   RETURN TYPE: struct inode *
  //*    PARAMETERS: int dev - 设备号
  //*                int num - inode 序号
- //*   DESCRIPTION: 在 dev 上取出地第 num 个 inode
+ //*   DESCRIPTION: 在 dev 上取出地第 num 个 inode 
+ //*                并将其保存至 inode_table
 /*****************************************************************************/
 PUBLIC struct inode *get_inode(int dev, int num)
 {
@@ -152,6 +165,13 @@ PUBLIC struct inode *get_inode(int dev, int num)
     return q;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: put_inode
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct inode *pinode
+ //*   DESCRIPTION: 释放 inode table 表项
+/*****************************************************************************/
 PUBLIC void put_inode(struct inode *pinode)
 {
     assert(pinode->i_cnt > 0);

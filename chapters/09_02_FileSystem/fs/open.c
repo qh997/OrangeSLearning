@@ -15,7 +15,7 @@ PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename);
  //*     PRIVILEGE: 0
  //*   RETURN TYPE: int
  //*    PARAMETERS: void
- //*   DESCRIPTION: 被 task_fs 调用
+ //*   DESCRIPTION: 
 /*****************************************************************************/
 PUBLIC int do_open()
 {
@@ -27,7 +27,6 @@ PUBLIC int do_open()
     int name_len = fs_msg.NAME_LEN;
     int src = fs_msg.source;
 
-    /* 跨越了两个特权级 */
     assert(name_len < MAX_PATH);
     phys_copy(
         (void *)va2la(TASK_FS, pathname),
@@ -52,15 +51,17 @@ PUBLIC int do_open()
     if (i >= NR_FILE_DESC)
         panic("f_desc_table[] is full (PID:%d)", proc2pid(pcaller));
 
+    /* 在磁盘中查找文件 */
     int inode_nr = search_file(pathname);
 
+    /* 准备创建或打开文件 */
     struct inode *pin = 0;
     if (flags & O_CREAT) {
         if (inode_nr) {
             printl("file exists.\n");
             return -1;
         }
-        else {
+        else { // 文件不存在且标志位 O_CREAT
             pin = creat_file(pathname, flags);
         }
     }
@@ -74,17 +75,17 @@ PUBLIC int do_open()
         pin = get_inode(dir_inode->i_dev, inode_nr);
     }
 
+    /* 关联文件描述符 */
     if (pin) {
-        /* connects proc with file_descriptor */
+        /* proc <- fd (connects proc with file_descriptor) */
         pcaller->filp[fd] = &f_desc_table[i];
 
-        /* connects file_descriptor with inode */
+        /* fd <- inode (connects file_descriptor with inode) */
         f_desc_table[i].fd_mode = flags;
         f_desc_table[i].fd_pos = 0;
         f_desc_table[i].fd_inode = pin;
 
         int imode = pin->i_mode & I_TYPE_MASK;
-
         if (imode == I_CHAR_SPECIAL) {
             MESSAGE driver_msg;
 
@@ -96,24 +97,35 @@ PUBLIC int do_open()
 
             send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
         }
-        else if (imode == I_DIRECTORY) {
+        else if (imode == I_DIRECTORY)
             assert(pin->i_num == ROOT_INODE);
-        }
-        else {
+        else
             assert(pin->i_mode == I_REGULAR);
-        }
     }
     else
-        return -1;
+        return -1; // open file failed
 
     return fd;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_close
+ //*     PRIVILEGE: 0
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 关闭一个文件
+/*****************************************************************************/
 PUBLIC int do_close()
 {
     int fd = fs_msg.FD;
+
+    /* 释放 inode 表项 */
     put_inode(pcaller->filp[fd]->fd_inode);
+
+    /* 释放文件描述符表项 */
     pcaller->filp[fd]->fd_inode = 0;
+
+    /* 释放进程中描述符 */
     pcaller->filp[fd] = 0;
 
     return 0;
@@ -132,13 +144,20 @@ PRIVATE struct inode *creat_file(char *path, int flags)
     char filename[MAX_PATH];
     struct inode *dir_inode;
 
+    /* 准备好文件名和文件夹的 inode */
     if (strip_path(filename, path, &dir_inode) != 0)
         return 0;
 
+    /* 分配 inode map */
     int inode_nr = alloc_imap_bit(dir_inode->i_dev);
+
+    /* 分配 sector map */
     int free_sect_nr = alloc_smap_bit(dir_inode->i_dev, NR_DEFAULT_FILE_SECTS);
 
+    /* 在 inode array 中分配一个 inode */
     struct inode *newino = new_inode(dir_inode->i_dev, inode_nr, free_sect_nr);
+
+    /* 新建一个目录项 */
     new_dir_entry(dir_inode, newino->i_num, filename);
 
     return newino;
@@ -240,7 +259,7 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
  //*    PARAMETERS: int dev
  //*                int inode_nr
  //*                int start_sect
- //*   DESCRIPTION: 
+ //*   DESCRIPTION: 取指定 inode 并初始化
 /*****************************************************************************/
 PRIVATE struct inode *new_inode(int dev, int inode_nr, int start_sect)
 {
@@ -260,28 +279,31 @@ PRIVATE struct inode *new_inode(int dev, int inode_nr, int start_sect)
     return new_inode;
 }
 
-PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename)
+/*****************************************************************************/
+ //* FUNCTION NAME: new_dir_entry
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct inode *dir_inode
+ //*                int inode_nr
+ //*                char *filename
+ //*   DESCRIPTION: 
+/*****************************************************************************/
+PRIVATE void new_dir_entry(struct inode *dir_inode, int inode_nr, char *filename)
 {
     /* write the dir_entry */
-    int dir_blk0_nr = dir_inode->i_start_sect;
-    int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE) / SECTOR_SIZE;
-    int nr_dir_entries =
-        dir_inode->i_size / DIR_ENTRY_SIZE; /**
-                             * including unused slots
-                             * (the file has been
-                             * deleted but the slot
-                             * is still there)
-                             */
+    int dir_blk0_nr = dir_inode->i_start_sect;                         // 目录文件的起始扇区
+    int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE) / SECTOR_SIZE; // 目录文件所占扇区数
+    int nr_dir_entries = dir_inode->i_size / DIR_ENTRY_SIZE;           // 目录项数
     int m = 0;
-    struct dir_entry * pde;
-    struct dir_entry * new_de = 0;
+    struct dir_entry *pde;
+    struct dir_entry *new_de = 0;
 
-    int i, j;
-    for (i = 0; i < nr_dir_blks; i++) {
+    int i;
+    for (i = 0; i < nr_dir_blks; i++) { // 逐扇区
         RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
 
         pde = (struct dir_entry *)fsbuf;
-        for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) {
+        for (int j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++, pde++) { // 逐目录项
             if (++m > nr_dir_entries)
                 break;
 
@@ -290,10 +312,12 @@ PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename)
                 break;
             }
         }
-        if (m > nr_dir_entries ||/* all entries have been iterated or */
-            new_de)              /* free slot is found */
+
+        if (m > nr_dir_entries || // all entries have been iterated or */
+            new_de)               // free slot is found */
             break;
     }
+    
     if (!new_de) { /* reached the end of the dir */
         new_de = pde;
         dir_inode->i_size += DIR_ENTRY_SIZE;
