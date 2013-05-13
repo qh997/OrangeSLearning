@@ -156,7 +156,7 @@ PUBLIC struct inode *get_inode(int dev, int num)
     /* 读取这个扇区然后找到第 num 个 inode */
     RD_SECT(dev, blk_nr);
     struct inode *pinode = 
-        (struct inode *)((u8 *)fsbuf + ((num - 1) % (SECTOR_SIZE / INODE_SIZE)));
+        (struct inode *)((u8 *)fsbuf + ((num - 1) % (SECTOR_SIZE / INODE_SIZE)) * INODE_SIZE);
 
     /* 准备一个新的 inode */
     q->i_mode = pinode->i_mode;

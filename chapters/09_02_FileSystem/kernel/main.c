@@ -126,11 +126,9 @@ PUBLIC int get_ticks()
 /*****************************************************************************/
 PUBLIC void panic(const char *fmt, ...)
 {
-    //int i;
     char buf[256];
 
     va_list arg = (va_list)((char *)&fmt + 4);
-    //i = vsprintf(buf, fmt, arg);
     vsprintf(buf, fmt, arg);
 
     printl("%c ||panic!! %s", MAG_CH_PANIC, buf);
@@ -141,65 +139,99 @@ PUBLIC void panic(const char *fmt, ...)
 /**************************/
 /*     USER PROCESSES     */
 /*                        */
-/*     run in      */
+/*   run in privilege 3   */
 /**************************/
 
 void TestA()
 {
     int fd;
-    int n;
-    const char filename[] = "blah";
+    int i, n;
+
+    char filename[MAX_FILENAME_LEN+1] = "blah";
     const char bufw[] = "abcde";
     const int rd_bytes = 3;
     char bufr[rd_bytes];
 
     assert(rd_bytes <= strlen(bufw));
 
+    /* create */
     fd = open(filename, O_CREAT | O_RDWR);
     assert(fd != -1);
-    printf("File created. fd: %d\n", fd);
+    printf("File created: %s (fd %d)\n", filename, fd);
 
+    /* write */
     n = write(fd, bufw, strlen(bufw));
     assert(n == strlen(bufw));
 
+    /* close */
     close(fd);
 
+    /* open */
     fd = open(filename, O_RDWR);
     assert(fd != -1);
     printf("File opened. fd: %d\n", fd);
 
+    /* read */
     n = read(fd, bufr, rd_bytes);
     assert(n == rd_bytes);
     bufr[n] = 0;
     printf("%d bytes read: %s\n", n, bufr);
 
+    /* close */
     close(fd);
 
-    fd = open("gengs", O_RDWR);
+    char * filenames[] = {"/foo", "/bar", "/baz"};
 
-    if (fd != -1) {
-        char buf_g[12];
-        read(fd, buf_g, 12);
-        printf("gengs: %s", buf_g);
+    /* create files */
+    for (i = 0; i < sizeof(filenames) / sizeof(filenames[0]); i++) {
+        fd = open(filenames[i], O_CREAT | O_RDWR);
+        assert(fd != -1);
+        printf("File created: %s (fd %d)\n", filenames[i], fd);
+        close(fd);
     }
-    else
-        printf("file gengs not exists\n");
+
+    char * rfilenames[] = {"/bar", "/foo", "/baz", "/dev_tty0"};
+
+    /* remove files */
+    for (i = 0; i < sizeof(rfilenames) / sizeof(rfilenames[0]); i++) {
+        if (unlink(rfilenames[i]) == 0)
+            printf("File removed: %s\n", rfilenames[i]);
+        else
+            printf("Failed to remove file: %s\n", rfilenames[i]);
+    }
 
     spin("TestA");
 }
 
 void TestB()
 {
-    int fd = open("gengs", O_CREAT | O_RDWR);
-    write(fd, "qh997 12345", 11);
-    close(fd);
+    char tty_name[] = "/dev_tty1";
 
-    int i = 0;
-    while(1) {
-        assert(i++ <= 10);
-        printf("<B Ticks:%x>", get_ticks());
-        milli_delay(1000);
+    int fd_stdin  = open(tty_name, O_RDWR);
+    assert(fd_stdin  == 0);
+    int fd_stdout = open(tty_name, O_RDWR);
+    assert(fd_stdout == 1);
+
+    char rdbuf[128];
+
+    while (1) {
+        write(fd_stdout, "$ ", 2);
+        int r = read(fd_stdin, rdbuf, 70);
+        rdbuf[r] = 0;
+
+        if (strcmp(rdbuf, "hello") == 0) {
+            write(fd_stdout, "hello world!\n", 13);
+        }
+        else {
+            if (rdbuf[0]) {
+                write(fd_stdout, "{", 1);
+                write(fd_stdout, rdbuf, r);
+                write(fd_stdout, "}\n", 2);
+            }
+        }
     }
+
+    assert(0); /* never arrive here */
 }
 
 void TestC()
