@@ -1,6 +1,6 @@
-#include "sys/const.h"
-#include "sys/global.h"
-#include "sys/proto.h"
+#include "const.h"
+#include "global.h"
+#include "proto.h"
 #include "string.h"
 
 /*****************************************************************************/

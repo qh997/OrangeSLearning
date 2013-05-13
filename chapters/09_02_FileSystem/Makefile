@@ -55,8 +55,8 @@ LOADER_HDR := $(BOOT_INC)/fat12.inc \
 LOADER_BIN := $(OUT_DIR)/loader.bin
 
 KERNEL_INC := include
-KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -f elf32
-KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector -Wall
+KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -f elf32
+KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector -Wall
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \

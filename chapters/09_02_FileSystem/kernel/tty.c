@@ -1,10 +1,10 @@
-#include "sys/const.h"
-#include "sys/proto.h"
-#include "sys/keyboard.h"
-#include "sys/global.h"
-#include "sys/tty.h"
-#include "sys/console.h"
-#include "sys/proc.h"
+#include "const.h"
+#include "proto.h"
+#include "keyboard.h"
+#include "global.h"
+#include "tty.h"
+#include "console.h"
+#include "proc.h"
 
 #define TTY_FIRST (tty_table)
 #define TTY_END   (tty_table + NR_CONSOLES)

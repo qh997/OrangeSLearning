@@ -1,11 +1,11 @@
 #ifndef _KERL__PROTO_H_
 #define _KERL__PROTO_H_
 
-#include "sys/const.h"
+#include "const.h"
 #include "type.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/fs.h"
+#include "tty.h"
+#include "proc.h"
+#include "fs.h"
 
 /* kliba.asm */
 PUBLIC void disp_str(char *info);

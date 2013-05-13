@@ -1,8 +1,8 @@
 #define GLOBAL_VARIABLES_HERE
 
-#include "sys/const.h"
-#include "sys/global.h"
-#include "sys/proto.h"
+#include "const.h"
+#include "global.h"
+#include "proto.h"
 
 /* 进程表 */
 PUBLIC PROCESS proc_table[NR_TASKS + NR_PROCS];

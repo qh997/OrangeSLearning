@@ -1,7 +1,7 @@
-#include "sys/const.h"
+#include "const.h"
 #include "type.h"
 #include "string.h"
-#include "sys/proto.h"
+#include "proto.h"
 #include "stdio.h"
 
 PUBLIC int open(const char *pathname, int flags)

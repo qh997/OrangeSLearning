@@ -1,6 +1,6 @@
-#include "sys/const.h"
-#include "sys/proto.h"
-#include "sys/global.h"
+#include "const.h"
+#include "proto.h"
+#include "global.h"
 #include "string.h"
 
 PRIVATE void block(PROCESS *p);

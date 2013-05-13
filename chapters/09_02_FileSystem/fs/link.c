@@ -1,8 +1,8 @@
-#include "sys/const.h"
-#include "sys/proto.h"
+#include "const.h"
+#include "proto.h"
 #include "string.h"
 #include "stdio.h"
-#include "sys/global.h"
+#include "global.h"
 
 /*****************************************************************************/
  //* FUNCTION NAME: do_unlink

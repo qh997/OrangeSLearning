@@ -1,8 +1,8 @@
 #ifndef _KERL__TTY_H_
 #define _KERL__TTY_H_
 
-#include "sys/const.h"
-#include "sys/console.h"
+#include "const.h"
+#include "console.h"
 
 #define TTY_IN_BYTES 256
 

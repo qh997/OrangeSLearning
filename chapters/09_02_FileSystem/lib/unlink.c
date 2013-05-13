@@ -1,6 +1,6 @@
-#include "sys/const.h"
+#include "const.h"
 #include "string.h"
-#include "sys/proto.h"
+#include "proto.h"
 
 PUBLIC int unlink(const char * pathname)
 {

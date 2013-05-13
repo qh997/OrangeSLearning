@@ -1,7 +1,7 @@
 #ifndef _KERL__STRING_H_
 #define _KERL__STRING_H_
 
-#include "sys/const.h"
+#include "const.h"
 
 PUBLIC void *memcpy(void *p_dst, const void *pSrc, const int size);
 PUBLIC void memset(void *p_dst, const char ch, const int size);

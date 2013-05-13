@@ -1,7 +1,7 @@
-#include "sys/const.h"
+#include "const.h"
 #include "type.h"
-#include "sys/proto.h"
-#include "sys/global.h"
+#include "proto.h"
+#include "global.h"
 
 PUBLIC void task_sys()
 {

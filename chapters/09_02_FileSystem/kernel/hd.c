@@ -1,6 +1,6 @@
-#include "sys/const.h"
-#include "sys/proto.h"
-#include "sys/hd.h"
+#include "const.h"
+#include "proto.h"
+#include "hd.h"
 #include "string.h"
 #include "stdio.h"
 

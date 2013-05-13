@@ -1,5 +1,5 @@
-#include "sys/const.h"
-#include "sys/proto.h"
+#include "const.h"
+#include "proto.h"
 
 PUBLIC int read(int fd, void *buf, int count)
 {

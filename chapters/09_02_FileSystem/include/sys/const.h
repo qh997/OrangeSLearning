@@ -1,7 +1,7 @@
 #ifndef _KERL__CONST_H_
 #define _KERL__CONST_H_
 
-#include "sys/config.h"
+#include "config.h"
 
 #define STR_DEFAULT_LEN 1024
 
@@ -214,5 +214,5 @@ enum msgtype {
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-#include "sys/proc.h"
+#include "proc.h"
 #endif

@@ -1,4 +1,4 @@
-#include "sys/const.h"
+#include "const.h"
 
 PUBLIC int close(int fd)
 {
