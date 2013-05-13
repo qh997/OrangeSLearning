@@ -31,9 +31,9 @@ PUBLIC void cstart()
     *p_gdt_base = (u32)&gdt;                          // 更新 GDT 基址
 
     /* 初始化 idtptr */
-    //u16 *p_idt_limit = (u16 *)(&idt_ptr[0]);
+    u16 *p_idt_limit = (u16 *)(&idt_ptr[0]);
     u32 *p_idt_base = (u32 *)(&idt_ptr[2]);
-    *p_gdt_limit = IDT_SIZE * sizeof(GATE) - 1;
+    *p_idt_limit = IDT_SIZE * sizeof(GATE) - 1;
     *p_idt_base = (u32)&idt;
 
     init_prot();
