@@ -95,6 +95,8 @@
 #define ANY     (NR_TASKS + NR_PROCS + 10)
 #define NO_TASK (NR_TASKS + NR_PROCS + 20)
 
+#define MAX_TICKS 0x7FFFABCD
+
 /* system call */
 #define NR_SYS_CALL 2
 
@@ -121,6 +123,10 @@ enum msgtype {
     LSEEK,
     STAT,
     UNLINK,
+
+    /* FS & TTY */
+    SUSPEND_PROC,
+    RESUME_PROC,
 
     /* TTY, SYS, FS, MM, etc */
     SYSCALL_RET,

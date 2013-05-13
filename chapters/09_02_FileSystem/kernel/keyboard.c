@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "keymap.h"
 #include "tty.h"
+#include "global.h"
 
 PRIVATE KB_INPUT kb_in;
 
@@ -33,6 +34,8 @@ PUBLIC void keyboard_handler(int irq)
         if (kb_in.p_head == kb_in.buf + KB_IN_BYTES)
             kb_in.p_head = kb_in.buf;
     }
+
+    key_pressed = 1;
 }
 
 PUBLIC void init_keyboard()
@@ -55,7 +58,7 @@ PUBLIC void init_keyboard()
     enable_irq(KEYBOARD_IRQ);
 }
 
-PUBLIC void keyboard_read(TTY *p_tty)
+PUBLIC void keyboard_read(TTY *tty)
 {
     u8 scan_code;
     int make;
@@ -235,7 +238,7 @@ PUBLIC void keyboard_read(TTY *p_tty)
                 key |= alt_l   ? FLAG_ALT_L   : 0;
                 key |= alt_r   ? FLAG_ALT_R   : 0;
 
-                in_process(p_tty, key);
+                in_process(tty, key);
             }
         }
     }

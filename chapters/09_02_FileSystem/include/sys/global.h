@@ -39,6 +39,7 @@ EXTERN int ticks;
 EXTERN int     nr_current_console;
 extern TTY     tty_table[];
 extern CONSOLE console_table[];
+EXTERN int key_pressed;
 
 extern struct dev_drv_map dd_map[];
 extern u8 * fsbuf;
