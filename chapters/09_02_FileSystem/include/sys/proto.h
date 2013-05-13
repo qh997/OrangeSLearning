@@ -112,7 +112,7 @@ PUBLIC int sprintf(char *buf, const char *fmt, ...);
 
 /* printf.c */
 PUBLIC int printf(const char *fmt, ...);
-#define printl printf
+PUBLIC int printl(const char *fmt, ...);
 
 /* misc.c */
 PUBLIC void spin(char *func_name);

@@ -25,8 +25,8 @@ PUBLIC void init_screen(TTY *tty)
         disp_pos = 0;
     }
     else {
-        out_char(tty->console, nr_tty + '0');
-        out_char(tty->console, '#');
+        for (const char *p = "[TTY #?]\n"; *p; p++)
+            out_char(tty->console, *p == '?' ? nr_tty + '0' : *p);
     }
 
     set_cursor(tty->console->cursor);

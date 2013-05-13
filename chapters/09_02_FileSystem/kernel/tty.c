@@ -151,7 +151,7 @@ PUBLIC int sys_printx(PROCESS *p_proc, char *s)
         if (ch == MAG_CH_PANIC || ch == MAG_CH_ASSERT)
             continue;
 
-        out_char(tty_table[p_proc->nr_tty].console, ch);
+        out_char(TTY_FIRST->console, ch);
     }
 
     return 0;
@@ -180,18 +180,17 @@ PRIVATE void tty_dev_write(TTY *tty)
             tty->ibuf_tail = tty->ibuf;
         tty->ibuf_cnt--;
 
-        printl("tty->ibuf_cnt %c - %d", ch, tty->tty_left_cnt);
         if (tty->tty_left_cnt) {
             if (ch >= ' ' && ch <= '~') { // printable
                 printl("printable ");
                 out_char(tty->console, ch);
-                void * p = tty->tty_req_buf +
-                       tty->tty_trans_cnt;
+                void *p = tty->tty_req_buf
+                        + tty->tty_trans_cnt;
                 phys_copy(p, (void *)va2la(TASK_TTY, &ch), 1);
                 tty->tty_trans_cnt++;
                 tty->tty_left_cnt--;
             }
-            else if (ch == '\b' && tty->tty_trans_cnt) {
+            else if (ch == '\b' && tty->tty_trans_cnt) { // 只删除输入的字符
                 out_char(tty->console, ch);
                 tty->tty_trans_cnt--;
                 tty->tty_left_cnt++;

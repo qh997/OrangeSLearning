@@ -3,6 +3,8 @@
 
 #define EXTERN extern
 
+#define STR_DEFAULT_LEN 1024
+
 #define O_CREAT 1
 #define O_RDWR  2
 

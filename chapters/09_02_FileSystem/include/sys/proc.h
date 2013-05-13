@@ -46,7 +46,7 @@ typedef struct proc {
     struct proc *q_sending;
     struct proc *next_sending;
 
-    int nr_tty;
+    //int nr_tty;
 
     struct file_desc *filp[NR_FILES];
 } PROCESS;
