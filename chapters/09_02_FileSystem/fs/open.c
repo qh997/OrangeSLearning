@@ -95,6 +95,7 @@ PUBLIC int do_open()
             assert(MAJOR(dev) == 4);
             assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 
+            /* 如果是字符设备则交给该设备的驱动处理 */
             send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
         }
         else if (imode == I_DIRECTORY)

@@ -59,7 +59,7 @@ PUBLIC void task_tty()
 
             case HARD_INT:
                 key_pressed = 0;
-                continue;
+                continue; // 回到循环开始处
 
             default:
                 dump_msg("TTY::unknown msg", &msg);
@@ -182,7 +182,6 @@ PRIVATE void tty_dev_write(TTY *tty)
 
         if (tty->tty_left_cnt) {
             if (ch >= ' ' && ch <= '~') { // printable
-                printl("printable ");
                 out_char(tty->console, ch);
                 void *p = tty->tty_req_buf
                         + tty->tty_trans_cnt;
@@ -190,12 +189,14 @@ PRIVATE void tty_dev_write(TTY *tty)
                 tty->tty_trans_cnt++;
                 tty->tty_left_cnt--;
             }
-            else if (ch == '\b' && tty->tty_trans_cnt) { // 只删除输入的字符
+            /* 只删除输入的字符 */
+            else if (ch == '\b' && tty->tty_trans_cnt) {
                 out_char(tty->console, ch);
                 tty->tty_trans_cnt--;
                 tty->tty_left_cnt++;
             }
 
+            /* 遇到回车或字符数目达到预设，恢复自己（对应于 tty_do_read） */
             if (ch == '\n' || tty->tty_left_cnt == 0) {
                 out_char(tty->console, '\n');
                 MESSAGE msg;
@@ -213,11 +214,12 @@ PRIVATE void tty_do_read(TTY *tty, MESSAGE *msg)
 {
     /* tell the tty: */
     tty->tty_caller = msg->source; // who called, usually FS
-    tty->tty_procnr = msg->PROC_NR; // who wants the chars
+    tty->tty_procnr = msg->PROC_NR; // who wants the chars, like TestB
     tty->tty_req_buf = va2la(tty->tty_procnr, msg->BUF); // where the chars should be put
     tty->tty_left_cnt = msg->CNT; // how many chars are requested
     tty->tty_trans_cnt= 0; // how many chars have been transferred
 
+    /* 通知发送进程将自己挂起 */
     msg->type = SUSPEND_PROC;
     msg->CNT = tty->tty_left_cnt;
     send_recv(SEND, tty->tty_caller, msg);

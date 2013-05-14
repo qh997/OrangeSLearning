@@ -7,9 +7,6 @@
 /* 进程表 */
 PUBLIC PROCESS proc_table[NR_TASKS + NR_PROCS];
 
-/* 进程栈 */
-PUBLIC char task_stack[STACK_SIZE_TOTAL];
-
 /* 任务表 */
 PUBLIC TASK task_table[NR_TASKS] = {
     {task_tty, STACK_SIZE_TTY, "TTY"},
@@ -25,9 +22,8 @@ PUBLIC TASK user_proc_table[NR_PROCS] = {
     {TestC, STACK_SIZE_TESTC, "TestC"},
 };
 
-/* tty */
-PUBLIC TTY     tty_table[NR_CONSOLES];
-PUBLIC CONSOLE console_table[NR_CONSOLES];
+/* 进程栈 */
+PUBLIC char task_stack[STACK_SIZE_TOTAL];
 
 /* 中断向量 */
 PUBLIC irq_handler irq_table[NR_IRQ];
@@ -38,6 +34,15 @@ PUBLIC system_call sys_call_table[NR_SYS_CALL] = {
     sys_sendrec,
 };
 
+/* tty */
+PUBLIC TTY     tty_table[NR_CONSOLES];
+PUBLIC CONSOLE console_table[NR_CONSOLES];
+
+/* FS 缓冲区 */
+PUBLIC u8        *fsbuf     = (u8 *)0x600000;
+PUBLIC const int FSBUF_SIZE =       0x100000; // 1MB bytes
+
+/* 设备驱动 */
 struct dev_drv_map dd_map[] = {
     {INVALID_DRIVER}, // 0 : Unused
     {INVALID_DRIVER}, // 1 : Reserved for floppy driver
@@ -46,6 +51,3 @@ struct dev_drv_map dd_map[] = {
     {TASK_TTY},       // 4 : TTY
     {INVALID_DRIVER}, // 5 : Reserved for scsi disk driver
 };
-
-PUBLIC u8 *fsbuf = (u8 *)0x600000;
-PUBLIC const int FSBUF_SIZE = 0x100000; // 1MB bytes

@@ -36,6 +36,10 @@ PUBLIC void keyboard_handler(int irq)
     }
 
     key_pressed = 1;
+    /* ?
+     * 为什么不在这里直接使用：
+     * inform_int(TASK_TTY);
+     */
 }
 
 PUBLIC void init_keyboard()

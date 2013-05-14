@@ -50,10 +50,10 @@ PUBLIC int kernel_main()
         memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 
-        /* 代码段指向第一个 IDT */
+        /* 代码段指向第一个 LDT */
         p_proc->regs.cs = ((0 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
 
-        /* 其他段指向第二个 IDT */
+        /* 其他段指向第二个 LDT */
         p_proc->regs.ds = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.es = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.fs = ((1 * 8) & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
@@ -136,11 +136,11 @@ PUBLIC void panic(const char *fmt, ...)
     __asm__ __volatile__("ud2");
 }
 
-/**************************/
-/*     USER PROCESSES     */
-/*                        */
-/*   run in privilege 3   */
-/**************************/
+/******************************************/
+/****          USER PROCESSES          ****/
+/****                                  ****/
+/****        run in privilege 3        ****/
+/******************************************/
 
 void TestA()
 {

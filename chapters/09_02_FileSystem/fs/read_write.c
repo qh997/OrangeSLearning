@@ -33,7 +33,8 @@ PUBLIC int do_rdwt()
 
     int imode = pin->i_mode & I_TYPE_MASK;
 
-    if (imode == I_CHAR_SPECIAL) { // 如果是字符设备则向该设备驱动发送消息
+    /* 如果是字符设备则交给该设备的驱动处理 */
+    if (imode == I_CHAR_SPECIAL) {
         int t = fs_msg.type == READ ? DEV_READ : DEV_WRITE;
         fs_msg.type = t;
 
@@ -50,6 +51,7 @@ PUBLIC int do_rdwt()
 
         return fs_msg.CNT;
     }
+    /* 普通文件或目录 */
     else {
         assert(pin->i_mode == I_REGULAR || pin->i_mode == I_DIRECTORY);
         assert((fs_msg.type == READ) || (fs_msg.type == WRITE));

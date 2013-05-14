@@ -55,6 +55,7 @@ PUBLIC void task_fs()
                 break;
         }
 
+        /* 如果发送者要求挂起，则不回送消息 */
         if (fs_msg.type != SUSPEND_PROC) {
             fs_msg.type = SYSCALL_RET;
             send_recv(SEND, src, &fs_msg);

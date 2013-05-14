@@ -169,7 +169,11 @@ enum msgtype {
 
 /* make device number from major and minor numbers */
 #define MAJOR_SHIFT 8
-#define MAKE_DEV(a, b) ((a << MAJOR_SHIFT) | b)
+#define MAKE_DEV(a, b) ((a << MAJOR_SHIFT) | b) /* Device number:
+                                                 * 15.......8 7.......0
+                                                 * |0000 0000|0000 0000|
+                                                 * |  major  |  minor  |
+                                                 */
 
 /* separate major/minor number from device munber */
 #define MAJOR(x) ((x >> MAJOR_SHIFT) & 0xFF)
@@ -189,8 +193,8 @@ enum msgtype {
 
 #define ROOT_DEV MAKE_DEV(DEV_HD, MINOR_BOOT)
 
-#define P_PRIMARY 0
-#define P_EXTENDED  1
+#define P_PRIMARY  0
+#define P_EXTENDED 1
 
 #define QHS_OART 0x99
 #define NO_PART  0x00
