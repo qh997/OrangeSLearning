@@ -232,6 +232,9 @@ void TestB()
 void TestC()
 {
     milli_delay(5000);
+
+    spin("TestC");
+
     while(1) {
         printl("C");
         milli_delay(1000);

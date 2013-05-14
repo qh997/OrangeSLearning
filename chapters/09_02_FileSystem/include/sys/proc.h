@@ -18,7 +18,7 @@ typedef struct strackframe {
     u32 edx;        // ┃
     u32 ecx;        // ┃
     u32 eax;        // ┛
-    u32 retaddr;    // 调用 save 时压栈
+    u32 retaddr;    // call save 时压栈
     u32 eip;        // ┓
     u32 cs;         // ┃
     u32 eflags;     // ┣ 中断发生时压栈

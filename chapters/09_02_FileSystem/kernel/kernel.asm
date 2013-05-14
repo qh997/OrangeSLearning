@@ -24,7 +24,7 @@ BITS  32
 [section .data]
 
 [section .bss]
-    StackSpace:  resb  2 * 1024 ; 2KB 的堆栈
+    StackSpace:  resb  2 * 1024 ; 2KB 的内核栈
     StackTop:
 
 [section .text]
@@ -119,11 +119,11 @@ _start:
     mov    al, EOI           ; ┓
     out    INT_M_CTL, al     ; ┻ 继续接收中断
 
-    sti
-    push   %1
+    sti                         ; 开中断
+    push   %1                   ;
     call   [irq_table + 4 * %1] ; ((irq_handler *)irq_table[irq])(irq)
-    pop    ecx
-    cli
+    pop    ecx                  ;
+    cli                         ; 关中断
 
     in     al, INT_M_CTLMASK ; ┓
     and    al, ~(1 << %1)    ; ┣ 恢复该中断
@@ -271,13 +271,15 @@ _start:
         hlt
 
 save:
+    ; 此时 eip/cs/eflags/esp/ss 已经压栈
+    ; call save 的返回地址也压栈，esp 指向 proc->regs.eax
     pushad        ; ┓
     push   ds     ; ┃
     push   es     ; ┣ 保护现场
     push   fs     ; ┃
     push   gs     ; ┛
 
-    mov    esi, edx
+    mov    esi, edx ; 暂存 edx（第四个参数）
     mov    dx, ss
     mov    ds, dx
     mov    es, dx
@@ -288,14 +290,14 @@ save:
 
     inc    dword [k_reenter]
     cmp    dword [k_reenter], 0         ; 如果 k_reenter != 0，则表示中断重入
-    jne    .1
-    mov    esp, StackTop                ; 切换到内核栈
+    jne    .1                           ; k_reenter != 0
+    mov    esp, StackTop                ; 切换到内核栈，在此之前绝对不能进行栈操作
     push   restart
-    jmp    [esi + RETADR - P_STACKBASE] ; 返回 hwint_master
+    jmp    [esi + RETADR - P_STACKBASE] ; 返回
     .1:
         push   restart_reenter
     .2:
-    jmp    [esi + RETADR - P_STACKBASE] ; 返回 hwint_master
+    jmp    [esi + RETADR - P_STACKBASE] ; 返回
                                         ; 由于存在栈切换并且压栈的值没有弹出
                                         ; 所以不能使用 ret 直接返回。
 
@@ -313,10 +315,10 @@ sys_call:
     add    esp, 4 * 4
 
     pop    esi
-    mov    [esi + EAXREG - P_STACKBASE], eax ; 返回值
+    mov    [esi + EAXREG - P_STACKBASE], eax ; 返回值，proc->regs.eax = eax
 
     cli
-    ret
+    ret ; 此时将跳转至在 save 中 push 的地址（restart/restart_reenter）
 
 restart: ; 非中断重入
     mov    esp, [p_proc_ready]           ; 切换到进程表栈
@@ -330,5 +332,5 @@ restart_reenter: ; 中断重入
     pop    es     ; ┃
     pop    ds     ; ┣ 恢复现场
     popad         ; ┛
-    add    esp, 4
-    iretd
+    add    esp, 4 ; 跳过 retaddr
+    iretd         ; pop eip/cs/eflags/esp/ss

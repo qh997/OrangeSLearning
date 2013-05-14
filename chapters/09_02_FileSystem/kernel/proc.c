@@ -184,7 +184,7 @@ PUBLIC void dump_msg(const char *title, MESSAGE *m)
            (int)m->u.m3.m3p1,
            (int)m->u.m3.m3p2,
            packed ? "" : "\n",
-           packed ? "" : "\n"/* , */
+           packed ? "" : "\n"
         );
 }
 
@@ -323,20 +323,20 @@ PRIVATE int msg_send(PROCESS *current, int dest, MESSAGE *m)
         assert(sender->p_sendto == NO_TASK);
     }
     else { // 如果目的进程没有等待接受本进程的消息
-        sender->p_flags |= SENDING;
+        sender->p_flags |= SENDING;         // 标志位置位，只有 p_flags == 0 该进程才会被调度
         assert(sender->p_flags == SENDING);
         sender->p_sendto = dest;
         sender->p_msg = m;
 
         /* 将自己添加到目的进程的发送者队列中去 */
         PROCESS *p;
-        if (p_dest->q_sending) {
+        if (p_dest->q_sending) { // 如果队列不为空
             p = p_dest->q_sending;
             while (p->next_sending)
                 p = p->next_sending;
             p->next_sending = sender;
         }
-        else {
+        else { // 如果队列为空
             p_dest->q_sending = sender;
         }
         sender->next_sending = NULL;

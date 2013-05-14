@@ -23,7 +23,7 @@ EXTERN u8         idt_ptr[6];
 EXTERN TSS        tss;
 
 /* 进程相关 */
-EXTERN PROCESS     *p_proc_ready;     // 当前进程，指向 proc_table 中某项
+EXTERN PROCESS     *p_proc_ready;     // 当前进程/即将被调度的进程，指向 proc_table 中某项
 extern PROCESS     proc_table[];      // 进程表
 extern TASK        task_table[];      // 系统任务
 extern TASK        user_proc_table[]; // 用户进程
