@@ -224,5 +224,7 @@ enum msgtype {
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+#define offsetof(TYPE, MEMBER) ((int)&((TYPE *)0)->MEMBER)
+
 #include "proc.h"
 #endif

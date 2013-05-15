@@ -183,8 +183,7 @@ PRIVATE void tty_dev_write(TTY *tty)
         if (tty->tty_left_cnt) {
             if (ch >= ' ' && ch <= '~') { // printable
                 out_char(tty->console, ch);
-                void *p = tty->tty_req_buf
-                        + tty->tty_trans_cnt;
+                void *p = tty->tty_req_buf + tty->tty_trans_cnt;
                 phys_copy(p, (void *)va2la(TASK_TTY, &ch), 1);
                 tty->tty_trans_cnt++;
                 tty->tty_left_cnt--;
@@ -213,16 +212,16 @@ PRIVATE void tty_dev_write(TTY *tty)
 PRIVATE void tty_do_read(TTY *tty, MESSAGE *msg)
 {
     /* tell the tty: */
-    tty->tty_caller = msg->source; // who called, usually FS
-    tty->tty_procnr = msg->PROC_NR; // who wants the chars, like TestB
+    tty->tty_caller = msg->source;                       // who called, usually FS
+    tty->tty_procnr = msg->PROC_NR;                      // who wants the chars, like TestB
     tty->tty_req_buf = va2la(tty->tty_procnr, msg->BUF); // where the chars should be put
-    tty->tty_left_cnt = msg->CNT; // how many chars are requested
-    tty->tty_trans_cnt= 0; // how many chars have been transferred
+    tty->tty_left_cnt = msg->CNT;                        // how many chars are requested
+    tty->tty_trans_cnt= 0;                               // how many chars have been transferred
 
     /* 通知发送进程将自己挂起 */
     msg->type = SUSPEND_PROC;
     msg->CNT = tty->tty_left_cnt;
-    send_recv(SEND, tty->tty_caller, msg);
+    send_recv(SEND, tty->tty_caller, msg); // 尽快返回，因为有可能其他进程会请求 FS
 }
 
 PRIVATE void tty_do_write(TTY *tty, MESSAGE *msg)

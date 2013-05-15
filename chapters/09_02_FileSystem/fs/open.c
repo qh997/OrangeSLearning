@@ -149,10 +149,10 @@ PRIVATE struct inode *creat_file(char *path, int flags)
     if (strip_path(filename, path, &dir_inode) != 0)
         return 0;
 
-    /* 分配 inode map */
+    /* 分配 inode */
     int inode_nr = alloc_imap_bit(dir_inode->i_dev);
 
-    /* 分配 sector map */
+    /* 分配 sector */
     int free_sect_nr = alloc_smap_bit(dir_inode->i_dev, NR_DEFAULT_FILE_SECTS);
 
     /* 在 inode array 中分配一个 inode */

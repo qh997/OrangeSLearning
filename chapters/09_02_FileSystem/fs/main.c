@@ -46,7 +46,7 @@ PUBLIC void task_fs()
                 break;
 
             case RESUME_PROC:
-                src = fs_msg.PROC_NR;
+                src = fs_msg.PROC_NR; // 恢复最初请求的进程，如 TestB
                 break;
 
             default:
@@ -156,7 +156,7 @@ PUBLIC struct inode *get_inode(int dev, int num)
 
     /* 读取这个扇区然后找到第 num 个 inode */
     RD_SECT(dev, blk_nr);
-    struct inode *pinode = 
+    struct inode *pinode =
         (struct inode *)((u8 *)fsbuf + ((num - 1) % (SECTOR_SIZE / INODE_SIZE)) * INODE_SIZE);
 
     /* 准备一个新的 inode */
@@ -286,20 +286,18 @@ PRIVATE void mkfs()
     struct super_block sb;
     sb.magic = MAGIC_V1;
     sb.nr_inodes = bits_per_sect;
-    sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
     sb.nr_sects = geo.size;
     sb.nr_imap_sects = 1;
     sb.nr_smap_sects = sb.nr_sects / bits_per_sect + 1;
+    sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
     sb.n_1st_sect = 1 + 1 + sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
     sb.root_inode = ROOT_INODE;
     sb.inode_size = INODE_SIZE;
-    struct inode x;
-    sb.inode_isize_off = (int)&x.i_size - (int)&x;
-    sb.inode_start_off = (int)&x.i_start_sect - (int)&x;
+    sb.inode_isize_off = offsetof(struct inode, i_size);
+    sb.inode_start_off = offsetof(struct inode, i_start_sect);
     sb.dir_ent_size = DIR_ENTRY_SIZE;
-    struct dir_entry de;
-    sb.dir_ent_inode_off = (int)&de.inode_nr - (int)&de;
-    sb.dir_ent_fname_off = (int)&de.name - (int)&de;
+    sb.dir_ent_inode_off = offsetof(struct dir_entry, inode_nr);
+    sb.dir_ent_fname_off = offsetof(struct dir_entry, name);
 
     memset(fsbuf, 0x90, SECTOR_SIZE);
     memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);

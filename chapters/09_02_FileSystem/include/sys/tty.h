@@ -14,11 +14,11 @@ typedef struct s_tty
     u32 *ibuf_tail;         // 指向键盘任务应处理的键值
     int ibuf_cnt;           // 缓冲区中已经填充了多少
 
-    int  tty_caller;
-    int  tty_procnr;
-    void *tty_req_buf;
-    int  tty_left_cnt;
-    int  tty_trans_cnt;
+    int  tty_caller;        // TTY 的调用进程，例如 FS
+    int  tty_procnr;        // 接收字符的进程，例如 TestB
+    void *tty_req_buf;      // 缓冲
+    int  tty_left_cnt;      // 剩余字符数目
+    int  tty_trans_cnt;     // 已经传输字符数目
 
     struct s_console *console;
 } TTY;
