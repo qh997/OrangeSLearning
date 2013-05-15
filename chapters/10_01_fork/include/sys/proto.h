@@ -20,14 +20,17 @@ PUBLIC void port_read(u16 port, void *buf, int n);
 PUBLIC void port_write(u16 port, void *buf, int n);
 
 /* klib.c */
+PUBLIC void get_boot_params(struct boot_params *pbp);
+PUBLIC int get_kernel_map(unsigned int *b, unsigned int *l);
 PUBLIC char *itoa(char *str, int num);
 PUBLIC void disp_int(int input);
 PUBLIC void delay(int time);
 
 /* protect.c */
 PUBLIC void init_prot();
+PUBLIC void init_desc(DESCRIPTOR *p_desc, u32 base, u32 limit, u16 attribute);
+PUBLIC u32 seg2linear(u16 seg);
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags);
-PUBLIC u32 seg2phys(u16 seg);
 
 /* i8259.c*/
 PUBLIC void init_8259A();
@@ -39,10 +42,11 @@ void restart();
 /* kmain.c */
 PUBLIC int kernel_main();
 PUBLIC int get_ticks();
+PUBLIC void panic(const char *fmt, ...);
+void Init();
 void TestA();
 void TestB();
 void TestC();
-PUBLIC void panic(const char *fmt, ...);
 
 /* clock.c */
 PUBLIC void milli_delay(int milli_sec);
@@ -72,6 +76,9 @@ PUBLIC int do_unlink();
 /* fs/misc.c */
 PUBLIC int search_file(char *path);
 PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppinode);
+
+/* mm/main.c */
+PUBLIC void task_mm();
 
 /* proc.c */
 PUBLIC void schedule();

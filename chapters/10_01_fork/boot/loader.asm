@@ -59,15 +59,15 @@ LABEL_START:
         jz     LABEL_NO_KERNELBIN            ; ┻ 没有找到 kernel.bin
         dec    word [wRootDirSizeForLoop]
 
-        mov    ax, BaseOfKernelFile   ; ┓
+        mov    ax, KERNEL_FILE_SEG    ; ┓
         mov    es, ax                 ; ┃
-        mov    bx, OffsetOfKernelFile ; ┃ es:bx = BaseOfKernelFile:OffsetOfKernelFile
+        mov    bx, KERNEL_FILE_OFF    ; ┃ es:bx = KERNEL_FILE_SEG:KERNEL_FILE_OFF
         mov    ax, [wSectorNo]        ; ┃ 从第 19 个扇区开始
         mov    cl, 1                  ; ┃ 一次只读一个扇区
         call   ReadSector             ; ┻ 将第 ax 个扇区开始的 cl 个扇区读入 es:bx 中
 
         mov    si, KernelFileName     ; ds:si -> "KERNEL  BIN"
-        mov    di, OffsetOfKernelFile ; es:di -> BaseOfKernelFile:OffsetOfKernelFile
+        mov    di, KERNEL_FILE_OFF    ; es:di -> KERNEL_FILE_SEG:KERNEL_FILE_OFF
         cld
         mov    dx, 10h ; 每个扇区一共有 512/32=16(10h) 个条目
         LABEL_SEARCH_FOR_LOADERBIN:
@@ -117,9 +117,9 @@ LABEL_START:
         push   cx               ; ┻ 保存开始的簇号（在 FAT 中的序号）
         add    cx, ax            ; ┓ cx = DeltaSectorNo + RootDirSectors + 文件的起始簇号
         add    cx, DeltaSectorNo ; ┻ cx = 文件的起始扇区号
-        mov    ax, BaseOfKernelFile
+        mov    ax, KERNEL_FILE_SEG
         mov    es, ax
-        mov    bx, OffsetOfKernelFile
+        mov    bx, KERNEL_FILE_OFF
         mov    ax, cx ; ax = 文件的起始扇区号
 
     LABEL_GOON_LOADING_FILE:
@@ -130,7 +130,7 @@ LABEL_START:
         mov    bl, 0Fh ; ┣ 每读一个扇区就打印一个点 “.”
         int    10h     ; ┛
 
-        pop    bx          ; ┓ es:bx = BaseOfKernelFile:OffsetOfKernelFile + n * BPB_BytsPerSec
+        pop    bx          ; ┓ es:bx = KERNEL_FILE_SEG:KERNEL_FILE_OFF + n * BPB_BytsPerSec
         pop    ax          ; ┃ ax = 文件当前的扇区号
         mov    cl, 1       ; ┣ 读一个扇区
         call   ReadSector  ; ┛
@@ -210,6 +210,15 @@ LABEL_PM_START:
     mov    [gs:((80 * 0 + 39) * 2)], ax
 
     call   InitKernel
+
+    ; fill in BootParam[]
+    mov    dword [BOOT_PARAM_ADDR], BOOT_PARAM_MAGIC ; Magic Number
+    mov    eax, [dwMemSize]
+    mov    [BOOT_PARAM_ADDR + 4], eax                ; memory size
+    mov    eax, KERNEL_FILE_SEG
+    shl    eax, 4
+    add    eax, KERNEL_FILE_OFF
+    mov    [BOOT_PARAM_ADDR + 8], eax                ; phy-addr of kernel.bin
 
     jmp    SelectorFlatC:KernelEntryPointPhyAddr
 

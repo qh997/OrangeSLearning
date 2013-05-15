@@ -16,11 +16,13 @@ OUT_DIR        := out
 OUT_KERNEL_DIR := $(OUT_DIR)/$(KERNEL_PATH)
 OUT_FS_DIR     := $(OUT_DIR)/fs
 OUT_LIB_DIR    := $(OUT_DIR)/$(LIB_PATH)
+OUT_MM_DIR     := $(OUT_DIR)/mm
 
 MKDIR_OUT        := @mkdir -p $(OUT_DIR)
 MKDIR_OUT_KERNEL := @mkdir -p $(OUT_KERNEL_DIR)
 MKDIR_OUT_FS     := @mkdir -p $(OUT_FS_DIR)
 MKDIR_OUT_LIB    := @mkdir -p $(OUT_LIB_DIR)
+MKDIR_OUT_MM     := @mkdir -p $(OUT_MM_DIR)
 
 IMG_FILE := boot.img
 IMG_MOUNT := /mnt/floppy
@@ -56,7 +58,7 @@ LOADER_BIN := $(OUT_DIR)/loader.bin
 
 KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -f elf32
-KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -c -m32 -std=c99 -fno-builtin -fno-stack-protector -Wall
+KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -c -m32 -std=c99 -fno-builtin -nostdlib -Wall
 KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
@@ -88,7 +90,8 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_LIB_DIR)/write.o \
               $(OUT_LIB_DIR)/read.o \
               $(OUT_FS_DIR)/link.o \
-              $(OUT_LIB_DIR)/unlink.o
+              $(OUT_LIB_DIR)/unlink.o \
+              $(OUT_MM_DIR)/main.o
 
 .PHONY: everytning all init clean install install_boot install_loader install_kernel
 
@@ -105,6 +108,7 @@ init:
 	$(MKDIR_OUT_KERNEL)
 	$(MKDIR_OUT_FS)
 	$(MKDIR_OUT_LIB)
+	$(MKDIR_OUT_MM)
 
 install: install_boot install_loader install_kernel
 
@@ -258,5 +262,9 @@ $(OUT_FS_DIR)/link.o: fs/link.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_LIB_DIR)/unlink.o: $(LIB_PATH)/unlink.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_MM_DIR)/main.o: mm/main.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

@@ -13,10 +13,12 @@ PUBLIC TASK task_table[NR_TASKS] = {
     {task_sys, STACK_SIZE_SYS, "SYS"},
     {task_hd,  STACK_SIZE_HD,  "HD" },
     {task_fs,  STACK_SIZE_FS,  "FS" },
+    {task_mm,  STACK_SIZE_MM,  "MM" },
 };
 
 /* 用户进程表 */
 PUBLIC TASK user_proc_table[NR_PROCS] = {
+    {Init,  STACK_SIZE_INIT,  "INIT" },
     {TestA, STACK_SIZE_TESTA, "TestA"},
     {TestB, STACK_SIZE_TESTB, "TestB"},
     {TestC, STACK_SIZE_TESTC, "TestC"},

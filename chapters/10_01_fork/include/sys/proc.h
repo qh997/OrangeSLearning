@@ -46,7 +46,8 @@ typedef struct proc {
     struct proc *q_sending;
     struct proc *next_sending;
 
-    //int nr_tty;
+    int p_parent;
+    int exit_status;
 
     struct file_desc *filp[NR_FILES];
 } PROCESS;
@@ -58,25 +59,31 @@ typedef struct task {
 } TASK;
 
 /* 任务数/进程数 */
-#define NR_TASKS 4
-#define NR_PROCS 3
-#define FIRST_PROC proc_table[0]
-#define LAST_PROC  proc_table[NR_TASKS + NR_PROCS - 1]
+#define NR_TASKS         5
+#define NR_PROCS        32
+#define NR_NATIVE_PROCS  4
+#define FIRST_PROC      proc_table[0]
+#define LAST_PROC       proc_table[NR_TASKS + NR_PROCS - 1]
 
 /* 进程栈 */
-#define STACK_SIZE_TTY   0x8000
-#define STACK_SIZE_SYS   0x8000
-#define STACK_SIZE_HD    0x8000
-#define STACK_SIZE_FS    0x8000
-#define STACK_SIZE_TESTA 0x8000
-#define STACK_SIZE_TESTB 0x8000
-#define STACK_SIZE_TESTC 0x8000
+#define STACK_SIZE_DEFAULT  0x4000
+#define STACK_SIZE_TTY      STACK_SIZE_DEFAULT
+#define STACK_SIZE_SYS      STACK_SIZE_DEFAULT
+#define STACK_SIZE_HD       STACK_SIZE_DEFAULT
+#define STACK_SIZE_FS       STACK_SIZE_DEFAULT
+#define STACK_SIZE_MM       STACK_SIZE_DEFAULT
+#define STACK_SIZE_INIT     STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTA    STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTB    STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTC    STACK_SIZE_DEFAULT
 
 #define STACK_SIZE_TOTAL ( \
     STACK_SIZE_TTY + \
     STACK_SIZE_SYS + \
     STACK_SIZE_HD + \
     STACK_SIZE_FS + \
+    STACK_SIZE_MM + \
+    STACK_SIZE_INIT + \
     STACK_SIZE_TESTA + \
     STACK_SIZE_TESTB + \
     STACK_SIZE_TESTC \

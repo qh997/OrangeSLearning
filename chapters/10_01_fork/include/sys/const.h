@@ -37,6 +37,9 @@
 /* Process */
 #define SENDING   0x02
 #define RECEIVING 0x04
+#define WAITING   0x08
+#define HANGING   0x10
+#define FREE_SLOT 0x20
 
 /* TTY */
 #define NR_CONSOLES 3
