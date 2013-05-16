@@ -9,13 +9,13 @@ jmp    LABEL_START
 %include  "ptmode.inc"
 
 LABEL_GDT:           Descriptor       0,       0, 0                  ; 空描述符
-LABEL_DESC_FLAT_C:   Descriptor       0, 0fffffh, DA_CR |DA_32|DA_4K ; 0-4G
-LABEL_DESC_FLAT_RW:  Descriptor       0, 0fffffh, DA_DRW|DA_32|DA_4K ; 0-4G
+LABEL_DESC_FLAT_C:   Descriptor       0, 0fffffh, DA_CR |DA_32|DA_4K ; 0-4G (1M * 4k)
+LABEL_DESC_FLAT_RW:  Descriptor       0, 0fffffh, DA_DRW|DA_32|DA_4K ; 0-4G (1M * 4k)
 LABEL_DESC_VIDEO:    Descriptor 0B8000h,  0ffffh, DA_DRW|DA_DPL3     ; 显存首地址
 
 GdtLen  equ $ - LABEL_GDT
-GdtPtr  dw  GdtLen - 1                      ; 段界限
-        dd  BaseOfLoaderPhyAddr + LABEL_GDT ; 基地址
+GdtPtr  dw  GdtLen - 1                  ; 段界限
+        dd  LOADER_PHY_ADDR + LABEL_GDT ; 基地址
 
 SelectorFlatC   equ  LABEL_DESC_FLAT_C  - LABEL_GDT
 SelectorFlatRW  equ  LABEL_DESC_FLAT_RW - LABEL_GDT
@@ -111,16 +111,16 @@ LABEL_START:
 
     LABEL_FILENAME_FOUND:
         mov    ax, RootDirSectors
-        and    di, 0FFE0h ; ┓ 回到当前条目的起始位置
-        add    di, 01Ah   ; ┻ 指向当前条目的起始簇号（DIR_FstClus）
-        mov    cx, word [es:di] ; ┓
-        push   cx               ; ┻ 保存开始的簇号（在 FAT 中的序号）
-        add    cx, ax            ; ┓ cx = DeltaSectorNo + RootDirSectors + 文件的起始簇号
-        add    cx, DeltaSectorNo ; ┻ cx = 文件的起始扇区号
+        and    di, 0FFE0h          ; ┓ 回到当前条目的起始位置
+        add    di, 01Ah            ; ┻ 指向当前条目的起始簇号（DIR_FstClus）
+        mov    cx, word [es:di]    ; ┓
+        push   cx                  ; ┻ 保存开始的簇号（在 FAT 中的序号）
+        add    cx, ax              ; ┓ cx = DeltaSectorNo + RootDirSectors + 文件的起始簇号
+        add    cx, DeltaSectorNo   ; ┻ cx = 文件的起始扇区号
         mov    ax, KERNEL_FILE_SEG
         mov    es, ax
         mov    bx, KERNEL_FILE_OFF
-        mov    ax, cx ; ax = 文件的起始扇区号
+        mov    ax, cx              ; ax = 文件的起始扇区号
 
     LABEL_GOON_LOADING_FILE:
         push   ax
@@ -130,15 +130,15 @@ LABEL_START:
         mov    bl, 0Fh ; ┣ 每读一个扇区就打印一个点 “.”
         int    10h     ; ┛
 
-        pop    bx          ; ┓ es:bx = KERNEL_FILE_SEG:KERNEL_FILE_OFF + n * BPB_BytsPerSec
-        pop    ax          ; ┃ ax = 文件当前的扇区号
-        mov    cl, 1       ; ┣ 读一个扇区
-        call   ReadSector  ; ┛
-        pop    ax          ; 取出此扇区在 FAT 中的序号
-        call   GetFATEntry ; 调用结束后 ax = 下一个簇号（在 FAT 中的序号）
+        pop    bx                ; ┓ es:bx = KERNEL_FILE_SEG:KERNEL_FILE_OFF + n * BPB_BytsPerSec
+        pop    ax                ; ┃ ax = 文件当前的扇区号
+        mov    cl, 1             ; ┣ 读一个扇区
+        call   ReadSector        ; ┛
+        pop    ax                ; 取出此扇区在 FAT 中的序号
+        call   GetFATEntry       ; 调用结束后 ax = 下一个簇号（在 FAT 中的序号）
         cmp    ax, 0FFFh         ; ┓
         jz     LABEL_FILE_LOADED ; ┻ 这是最后一个簇
-        push   ax                   ; 保存当前簇号（在 FAT 中的序号）
+        push   ax                ; 保存当前簇号（在 FAT 中的序号）
         mov    dx, RootDirSectors
         add    ax, dx
         add    ax, DeltaSectorNo    ; ax = 文件当前当前簇号对应的的扇区号
@@ -162,7 +162,7 @@ LABEL_START:
         or     eax, 1
         mov    cr0, eax
 
-        jmp    dword SelectorFlatC:(BaseOfLoaderPhyAddr + LABEL_PM_START)
+        jmp    dword SelectorFlatC:(LOADER_PHY_ADDR + LABEL_PM_START)
 
 %include  "lib_rm.inc"
 
@@ -220,7 +220,7 @@ LABEL_PM_START:
     add    eax, KERNEL_FILE_OFF
     mov    [BOOT_PARAM_ADDR + 8], eax                ; phy-addr of kernel.bin
 
-    jmp    SelectorFlatC:KernelEntryPointPhyAddr
+    jmp    SelectorFlatC:KRNL_ENT_PT_PHY_ADDR
 
         ; 内存示意图
             ;           ┃                 .                  ┃
@@ -231,10 +231,10 @@ LABEL_PM_START:
             ;           ┃■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■┃
             ;           ┃■■■■■■■■■■■ Page  Tables ■■■■■■■■■■■┃
             ;           ┃■■■■■■■■ (Decide by LOADER) ■■■■■■■■┃
-            ; 00101000h ┃■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■┃ PageTblBase
+            ; 00101000h ┃■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■┃ PAGE_TBL_BASE
             ;           ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
             ;           ┃■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■┃
-            ; 00100000h ┃■■■■■■■ Page Directory Table ■■■■■■■┃ PageDirBase  <- 1M
+            ; 00100000h ┃■■■■■■■ Page Directory Table ■■■■■■■┃ PAGE_DIR_BASE  <- 1M
             ;           ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
             ;           ┃□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□┃
             ;    F0000h ┃□□□□□□□□□□□□ System ROM □□□□□□□□□□□□┃
@@ -258,7 +258,7 @@ LABEL_PM_START:
             ;    80000h ┃■■■■■■■■■■■■ KERNEL.BIN ■■■■■■■■■■■■┃
             ;           ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
             ;           ┃■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■┃
-            ;    30000h ┃■■■■■■■■■■■■■■ KERNEL ■■■■■■■■■■■■■■┃ 30400h ← KERNEL 入口 (KernelEntryPointPhyAddr)
+            ;    30000h ┃■■■■■■■■■■■■■■ KERNEL ■■■■■■■■■■■■■■┃ 30400h ← KERNEL 入口 (KRNL_ENT_PT_PHY_ADDR)
             ;           ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
             ;           ┃                                    ┃
             ;     7E00h ┃             F  R  E  E             ┃
@@ -335,39 +335,39 @@ DispMemInfo:
     ret
 
 SetupPaging:
-    xor    edx, edx               ;
-    mov    eax, [dwMemSize]       ;
-    mov    ebx, 400000h           ; 400000h = 4M = 4096K * 1024, 一个页表对应的内存大小
-    div    ebx                    ; PageTableNumber = dwMemSize / 4M
-    mov    ecx, eax               ;
-    test   edx, edx               ;
-    jz     .no_remainder          ; if (dwMemSize % 4M)
-    inc    ecx                    ;     ++PageTableNumber
-                                  ;
-    .no_remainder:                ;
-    mov    [PageTableNumber], ecx ;
-    mov    ax, SelectorFlatRW     ;
-    mov    es, ax                 ;
-    mov    edi, PageDirBase       ;
-    xor    eax, eax               ;
-    mov    eax, PageTblBase | PGN ;
-    .1:                           ; for (i = PageTableNumber, addr = PageTblBase; i > 0; --i)
-        stosd                     ;     [SelectorFlatRW:PageDirBase] = addr
-        add    eax, 4096          ;     addr += 4K
-        loop   .1                 ;     PageDirBase += 4 （双字 4 Byte）
-    mov    eax, [PageTableNumber] ;
-    mov    ebx, 1024              ;
-    mul    ebx                    ;
-    mov    ecx, eax               ; page_num = PageTableNumber * 1024
-    mov    edi, PageTblBase       ;
-    xor    eax, eax               ;
-    mov    eax, PGN               ;
-    .2:                           ; for (i = page_num, addr = 0; i > 0; --i)
-        stosd                     ;     [SelectorFlatRW:PageTblBase] = addr
-        add    eax, 4096          ;     addr += 4K
-        loop   .2                 ;     PageTblBase += 4 （双字 4 Byte）
+    xor    edx, edx                 ;
+    mov    eax, [dwMemSize]         ;
+    mov    ebx, 400000h             ; 400000h = 4M = 4096K * 1024, 一个页表对应的内存大小
+    div    ebx                      ; PageTableNumber = dwMemSize / 4M
+    mov    ecx, eax                 ;
+    test   edx, edx                 ;
+    jz     .no_remainder            ; if (dwMemSize % 4M)
+    inc    ecx                      ;     ++PageTableNumber
+                                    ;
+    .no_remainder:                  ;
+    mov    [PageTableNumber], ecx   ;
+    mov    ax, SelectorFlatRW       ;
+    mov    es, ax                   ;
+    mov    edi, PAGE_DIR_BASE       ;
+    xor    eax, eax                 ;
+    mov    eax, PAGE_TBL_BASE | PGN ;
+    .1:                             ; for (i = PageTableNumber, addr = PAGE_TBL_BASE; i > 0; --i)
+        stosd                       ;     [SelectorFlatRW:PAGE_DIR_BASE] = addr
+        add    eax, 4096            ;     addr += 4K
+        loop   .1                   ;     PAGE_DIR_BASE += 4 （双字 4 Byte）
+    mov    eax, [PageTableNumber]   ;
+    mov    ebx, 1024                ;
+    mul    ebx                      ;
+    mov    ecx, eax                 ; page_num = PageTableNumber * 1024
+    mov    edi, PAGE_TBL_BASE       ;
+    xor    eax, eax                 ;
+    mov    eax, PGN                 ;
+    .2:                             ; for (i = page_num, addr = 0; i > 0; --i)
+        stosd                       ;     [SelectorFlatRW:PAGE_TBL_BASE] = addr
+        add    eax, 4096            ;     addr += 4K
+        loop   .2                   ;     PAGE_TBL_BASE += 4 （双字 4 Byte）
 
-    mov    eax, PageDirBase
+    mov    eax, PAGE_DIR_BASE
     mov    cr3, eax
     mov    eax, cr0
     or     eax, 80000000h
@@ -378,26 +378,26 @@ SetupPaging:
     ret
 
 InitKernel:
-    xor    esi, esi                                 ;
-    mov    cx, word [BaseOfKernelFilePhyAddr + 2ch] ; ┓ 44 bytes = 2ch
-    movzx  ecx, cx                                  ; ┻ ecx = pELFHdr->e_phnum
-    mov    esi, [BaseOfKernelFilePhyAddr + 1ch]     ; 28 bytes = 1ch
-    add    esi, BaseOfKernelFilePhyAddr             ; esi = BaseOfKernelFilePhyAddr + pELFHdr->e_phoff
-    .begin:                                         ; for (i = e_phnum; i > 0; --i) {
-        mov    eax, [esi + 0]                       ;     \\ Elf32_Phdr->p_type
-        cmp    eax, 0                               ;     if (p_type == 0)
-        jz     .NoAction                            ;         continue;
-        push   dword [esi + 010h]                   ;     \\ Elf32_Phdr->p_filesz
-        mov    eax, [esi + 04h]                     ;     \\ Elf32_Phdr->p_offset
-        add    eax, BaseOfKernelFilePhyAddr         ;
-        push   eax                                  ;
-        push   dword [esi + 08h]                    ;     \\ Elf32_Phdr->p_vaddr
-        call   MemCpy                               ;     memcpy((void *)p_vaddr, B21r + p_offset, p_filesz);
-        add    esp, 12                              ;
-        .NoAction:                                  ;
-            add    esi, 020h                        ;
-            dec    ecx                              ;
-            jnz    .begin                           ; }
+    xor    esi, esi                              ;
+    mov    cx, word [KERNEL_FILE_PHY_ADDR + 2ch] ; ┓ 44 bytes = 2ch
+    movzx  ecx, cx                               ; ┻ ecx = pELFHdr->e_phnum
+    mov    esi, [KERNEL_FILE_PHY_ADDR + 1ch]     ; 28 bytes = 1ch
+    add    esi, KERNEL_FILE_PHY_ADDR             ; esi = KERNEL_FILE_PHY_ADDR + pELFHdr->e_phoff
+    .begin:                                      ; for (i = e_phnum; i > 0; --i) {
+        mov    eax, [esi + 0]                    ;     \\ Elf32_Phdr->p_type
+        cmp    eax, 0                            ;     if (p_type == 0)
+        jz     .NoAction                         ;         continue;
+        push   dword [esi + 010h]                ;     \\ Elf32_Phdr->p_filesz
+        mov    eax, [esi + 04h]                  ;     \\ Elf32_Phdr->p_offset
+        add    eax, KERNEL_FILE_PHY_ADDR         ;
+        push   eax                               ;
+        push   dword [esi + 08h]                 ;     \\ Elf32_Phdr->p_vaddr
+        call   MemCpy                            ;     memcpy((void *)p_vaddr, B21r + p_offset, p_filesz);
+        add    esp, 12                           ;
+        .NoAction:                               ;
+            add    esi, 020h                     ;
+            dec    ecx                           ;
+            jnz    .begin                        ; }
     ret
 
 %include  "lib_pm.inc"
@@ -422,21 +422,21 @@ LABEL_DATA:
         _dwType:          dd  0
     _MemChkBuf: times   256 db  0
 
-    szMemChkTitle    equ  BaseOfLoaderPhyAddr + _szMemChkTitle
-    szRAMSize        equ  BaseOfLoaderPhyAddr + _szRAMSize
-    szReturn         equ  BaseOfLoaderPhyAddr + _szReturn
-    szSpace          equ  BaseOfLoaderPhyAddr + _szSpace
-    dwDispPos        equ  BaseOfLoaderPhyAddr + _dwDispPos
-    dwMemSize        equ  BaseOfLoaderPhyAddr + _dwMemSize
-    dwMCRNumber      equ  BaseOfLoaderPhyAddr + _dwMCRNumber
-    PageTableNumber  equ  BaseOfLoaderPhyAddr + _PageTableNumber
-    ARDStruct        equ  BaseOfLoaderPhyAddr + _ARDStruct
-        dwBaseAddrLow   equ  BaseOfLoaderPhyAddr + _dwBaseAddrLow
-        dwBaseAddrHigh  equ  BaseOfLoaderPhyAddr + _dwBaseAddrHigh
-        dwLengthLow     equ  BaseOfLoaderPhyAddr + _dwLengthLow
-        dwLengthHigh    equ  BaseOfLoaderPhyAddr + _dwLengthHigh
-        dwType          equ  BaseOfLoaderPhyAddr + _dwType
-    MemChkBuf  equ  BaseOfLoaderPhyAddr + _MemChkBuf
+    szMemChkTitle    equ  LOADER_PHY_ADDR + _szMemChkTitle
+    szRAMSize        equ  LOADER_PHY_ADDR + _szRAMSize
+    szReturn         equ  LOADER_PHY_ADDR + _szReturn
+    szSpace          equ  LOADER_PHY_ADDR + _szSpace
+    dwDispPos        equ  LOADER_PHY_ADDR + _dwDispPos
+    dwMemSize        equ  LOADER_PHY_ADDR + _dwMemSize
+    dwMCRNumber      equ  LOADER_PHY_ADDR + _dwMCRNumber
+    PageTableNumber  equ  LOADER_PHY_ADDR + _PageTableNumber
+    ARDStruct        equ  LOADER_PHY_ADDR + _ARDStruct
+        dwBaseAddrLow   equ  LOADER_PHY_ADDR + _dwBaseAddrLow
+        dwBaseAddrHigh  equ  LOADER_PHY_ADDR + _dwBaseAddrHigh
+        dwLengthLow     equ  LOADER_PHY_ADDR + _dwLengthLow
+        dwLengthHigh    equ  LOADER_PHY_ADDR + _dwLengthHigh
+        dwType          equ  LOADER_PHY_ADDR + _dwType
+    MemChkBuf  equ  LOADER_PHY_ADDR + _MemChkBuf
 
     StackSpace:  times  1024  db  0
-    TopOfStack   equ  BaseOfLoaderPhyAddr + $
+    TopOfStack   equ  LOADER_PHY_ADDR + $

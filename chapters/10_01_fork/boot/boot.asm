@@ -35,15 +35,15 @@ LABEL_START:
         jz     LABEL_NO_LOADERBIN            ; ┻ 没有找到 loader.bin
         dec    word [wRootDirSizeForLoop]
 
-        mov    ax, BaseOfLoader   ; ┓
-        mov    es, ax             ; ┃
-        mov    bx, OffsetOfLoader ; ┃ es:bx = BaseOfLoader:OffsetOfLoader
-        mov    ax, [wSectorNo]    ; ┃ 从第 19 个扇区开始
-        mov    cl, 1              ; ┃ 一次只读一个扇区
-        call   ReadSector         ; ┻ 将第 ax 个扇区开始的 cl 个扇区读入 es:bx 中
+        mov    ax, LOADER_SEG  ; ┓
+        mov    es, ax          ; ┃
+        mov    bx, LOADER_OFF  ; ┃ es:bx = LOADER_SEG:LOADER_OFF
+        mov    ax, [wSectorNo] ; ┃ 从第 19 个扇区开始
+        mov    cl, 1           ; ┃ 一次只读一个扇区
+        call   ReadSector      ; ┻ 将第 ax 个扇区开始的 cl 个扇区读入 es:bx 中
 
         mov    si, LoaderFileName ; ds:si -> "LOADER  BIN"
-        mov    di, OffsetOfLoader ; es:di -> BaseOfLoader:OffsetOfLoader
+        mov    di, LOADER_OFF     ; es:di -> LOADER_SEG:LOADER_OFF
         cld
         mov    dx, 10h ; 每个扇区一共有 512/32=16(10h) 个条目
         LABEL_SEARCH_FOR_LOADERBIN:
@@ -81,15 +81,15 @@ LABEL_START:
 
     LABEL_FILENAME_FOUND:
         mov    ax, RootDirSectors
-        and    di, 0FFE0h ; ┓ 回到当前条目的起始位置
-        add    di, 01Ah   ; ┻ 指向当前条目的起始簇号（DIR_FstClus）
-        mov    cx, word [es:di] ; ┓
-        push   cx               ; ┻ 保存开始的簇号（在 FAT 中的序号）
+        and    di, 0FFE0h        ; ┓ 回到当前条目的起始位置
+        add    di, 01Ah          ; ┻ 指向当前条目的起始簇号（DIR_FstClus）
+        mov    cx, word [es:di]  ; ┓
+        push   cx                ; ┻ 保存开始的簇号（在 FAT 中的序号）
         add    cx, ax            ; ┓ cx = DeltaSectorNo + RootDirSectors + 文件的起始簇号
         add    cx, DeltaSectorNo ; ┻ cx = 文件的起始扇区号
-        mov    ax, BaseOfLoader
+        mov    ax, LOADER_SEG
         mov    es, ax
-        mov    bx, OffsetOfLoader
+        mov    bx, LOADER_OFF
         mov    ax, cx ; ax = 文件的起始扇区号
 
     LABEL_GOON_LOADING_FILE:
@@ -100,7 +100,7 @@ LABEL_START:
         mov    bl, 0Fh ; ┣ 每读一个扇区就打印一个点 “.”
         int    10h     ; ┛
 
-        pop    bx          ; ┓ es:bx = BaseOfLoader:OffsetOfLoader + n * BPB_BytsPerSec
+        pop    bx          ; ┓ es:bx = LOADER_SEG:LOADER_OFF + n * BPB_BytsPerSec
         pop    ax          ; ┃ ax = 文件当前的扇区号
         mov    cl, 1       ; ┣ 读一个扇区
         call   ReadSector  ; ┛
@@ -108,7 +108,7 @@ LABEL_START:
         call   GetFATEntry ; 调用结束后 ax = 下一个簇号（在 FAT 中的序号）
         cmp    ax, 0FFFh         ; ┓
         jz     LABEL_FILE_LOADED ; ┻ 这是最后一个簇
-        push   ax                   ; 保存当前簇号（在 FAT 中的序号）
+        push   ax                ; 保存当前簇号（在 FAT 中的序号）
         mov    dx, RootDirSectors
         add    ax, dx
         add    ax, DeltaSectorNo    ; ax = 文件当前当前簇号对应的的扇区号
@@ -119,7 +119,7 @@ LABEL_START:
             mov    dx, 0100h ; "Ready.   "
             call   DispStrRM
 
-    jmp    BaseOfLoader:OffsetOfLoader ; 跳转到内存中 loader.bin 开始处，并交出控制权
+    jmp    LOADER_SEG:LOADER_OFF ; 跳转到内存中 loader.bin 开始处，并交出控制权
 
 %include  "lib_rm.inc"
 

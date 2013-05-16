@@ -33,9 +33,9 @@ GetFATEntry:
     push   es
     push   bx
     push   ax
-    mov    ax, BaseOfLoader ; ┓
-    sub    ax, 0100h        ; ┣ 在 BaseOfLoader 后面留出 4K 空间用于存放 FAT
-    mov    es, ax           ; ┛
+    mov    ax, LOADER_SEG ; ┓
+    sub    ax, 0100h      ; ┣ 在 BaseOfLoader 后面留出 4K 空间用于存放 FAT
+    mov    es, ax         ; ┛
     pop    ax
     mov    byte [bOdd], 0
     mov    bx, 3 ; ┓

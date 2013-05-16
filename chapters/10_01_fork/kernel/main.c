@@ -20,10 +20,12 @@ PUBLIC int kernel_main()
     PROCESS *p = proc_table;
     TASK *t = task_table;
     char *stk = task_stack + STACK_SIZE_TOTAL;
-    u16 selector_ldt = SELECTOR_LDT_FIRST;
 
     /* 初始化进程表 */
-    for (int i = 0; i < NR_TASKS + NR_PROCS; i++, p++, t++) {
+    for (int i = 0;
+         i < NR_TASKS + NR_PROCS;
+         i++, p++, t++, stk -= t->stacksize) {
+        /* 子进程预留 */
         if (i >= NR_TASKS + NR_NATIVE_PROCS) {
             p->p_flags = FREE_SLOT;
             continue;
@@ -49,18 +51,19 @@ PUBLIC int kernel_main()
         strcpy(p->name, t->name);
         p->p_parent = NO_TASK;
 
-        if (strcmp(t->name, "INIT") != 0) {
+        if (strcmp(t->name, "INIT") != 0) { // 不是 INIT 进程
+            /* 直接使用 0～4G 内存空间 */
             p->ldts[INDEX_LDT_C] = gdt[SELECTOR_KERNEL_CS >> 3];
             p->ldts[INDEX_LDT_RW] = gdt[SELECTOR_KERNEL_DS >> 3];
 
             p->ldts[INDEX_LDT_C].attr1 = DA_C | priv << 5;
             p->ldts[INDEX_LDT_RW].attr1 = DA_DRW | priv << 5;
         }
-        else {
-            unsigned int k_base;
-            unsigned int k_limit;
+        else { // INIT 进程
+            unsigned int k_base, k_limit;
             assert(0 == get_kernel_map(&k_base, &k_limit));
 
+            /* 初始化 LDT */
             init_desc(
                 &p->ldts[INDEX_LDT_C],
                 0, 
@@ -74,7 +77,6 @@ PUBLIC int kernel_main()
                 (k_base + k_limit) >> LIMIT_4K_SHIFT,
                 DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5
             );
-
         }
         memcpy(&p->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
         p->ldts[0].attr1 = DA_C | priv << 5;
@@ -93,10 +95,11 @@ PUBLIC int kernel_main()
         /* gs 不变 */
         p->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;
 
-        p->regs.eip= (u32)t->initial_eip;
-        p->regs.esp= (u32)stk;
+        p->regs.eip= (u32)t->initial_eip; // 入口地址
+        p->regs.esp= (u32)stk;            // 栈指针
         p->regs.eflags = eflags;
 
+        /* IPC */
         p->p_flags = 0;
         p->p_msg = 0;
         p->p_recvfrom = NO_TASK;
@@ -105,10 +108,8 @@ PUBLIC int kernel_main()
         p->q_sending = 0;
         p->next_sending = 0;
 
+        /* 优先级 */
         p->priority = p->ticks = prio;
-
-        stk -= t->stacksize;
-        selector_ldt += 1 << 3; // selector_ldt += 8
     }
 
     k_reenter = 0;

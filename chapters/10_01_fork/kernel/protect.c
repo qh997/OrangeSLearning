@@ -100,28 +100,20 @@ PUBLIC void init_prot()
         DA_386TSS
     );
 
-    /* 填充 GDT 中进程的 LDT 的描述符 */
-    /*PROCESS *p_proc = proc_table;
-    u16 selector_ldt = INDEX_LDT_FIRST << 3;
-    for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
-        init_desc(
-            &gdt[selector_ldt >> 3],
-            vir2phys(seg2linear(SELECTOR_KERNEL_DS), proc_table[i].ldts),
-            LDT_SIZE * sizeof(DESCRIPTOR) - 1,
-            DA_LDT
-        );
-        p_proc++;
-        selector_ldt += 1 << 3;
-    }*/
     for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
         memset(&proc_table[i], 0, sizeof(struct proc));
 
+        /* 进程表中的 LDT 选择子 */
         proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
         assert(INDEX_LDT_FIRST + i < GDT_SIZE);
-        init_desc(&gdt[INDEX_LDT_FIRST + i],
-              makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
-              LDT_SIZE * sizeof(struct descriptor) - 1,
-              DA_LDT);
+
+        /* 初始化 GDT 中的 LDT 的描述符 */
+        init_desc(
+            &gdt[INDEX_LDT_FIRST + i],
+            makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
+            LDT_SIZE * sizeof(struct descriptor) - 1,
+            DA_LDT
+        );
     }
 }
 
@@ -131,7 +123,8 @@ PUBLIC void init_desc(DESCRIPTOR *p_desc, u32 base, u32 limit, u16 attribute)
     p_desc->base_low = base & 0xFFFF;
     p_desc->base_mid = (base >> 16) & 0xFF;
     p_desc->attr1 = attribute & 0xFF;
-    p_desc->limit_high_attr2 = ((limit>>16) & 0x0F) | ((attribute>>8) & 0xF0);
+    p_desc->limit_high_attr2 = ((limit>>16) & 0x0F)
+                             | ((attribute>>8) & 0xF0);
     p_desc->base_high = (base >> 24) & 0xFF;
 }
 
