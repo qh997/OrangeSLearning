@@ -110,6 +110,7 @@ PUBLIC int kernel_main()
 
         /* 优先级 */
         p->priority = p->ticks = prio;
+        p->pid = i;
     }
 
     k_reenter = 0;
@@ -168,7 +169,22 @@ PUBLIC void panic(const char *fmt, ...)
 
 void Init()
 {
-    while (1);
+    int fd_stdin = open("/dev_tty0", O_RDWR);
+    assert(0 == fd_stdin);
+    int fd_stdout = open("/dev_tty0", O_RDWR);
+    assert(1 == fd_stdout);
+
+    printf("Init() is running ... %d\n", p_proc_ready->pid);
+
+    int pid = fork();
+    if (pid != 0) {
+        printf("parent is running, child pid: %d\n", pid);
+        spin("parent");
+    }
+    else {
+        printf("child is running, pid: %d\n", getpid());
+        spin("child");
+    }
 }
 
 void TestA()

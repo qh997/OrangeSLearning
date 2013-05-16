@@ -10,7 +10,7 @@ PUBLIC int printf(const char *fmt, ...)
 
     va_list arg = (va_list)((char *)(&fmt) + 4);
     i = vsprintf(buf, fmt, arg);
-    int c = write(1, buf, i); // 默认使用该进程的第一个文件描述符
+    int c = write(1, buf, i); // 默认使用该进程的第二个文件描述符
     
     assert(c == i);
 

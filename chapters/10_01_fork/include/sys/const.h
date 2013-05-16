@@ -117,6 +117,8 @@ enum msgtype {
 
     /* SYS task */
     GET_TICKS,
+    GET_PID,
+    GET_RTC_TIME,
 
     /* FS */
     OPEN,
@@ -130,6 +132,14 @@ enum msgtype {
     /* FS & TTY */
     SUSPEND_PROC,
     RESUME_PROC,
+
+    /* MM */
+    EXEC,
+    WAIT,
+
+    /* FS & MM */
+    FORK,
+    EXIT,
 
     /* TTY, SYS, FS, MM, etc */
     SYSCALL_RET,
@@ -146,9 +156,11 @@ enum msgtype {
 #define RETVAL   u.m3.m3i1
 #define FD       u.m3.m3i1
 #define FLAGS    u.m3.m3i1
+#define STATUS   u.m3.m3i1
 #define REQUEST  u.m3.m3i2
 #define CNT      u.m3.m3i2
 #define NAME_LEN u.m3.m3i2
+#define PID      u.m3.m3i2
 #define PROC_NR  u.m3.m3i3
 #define DEVICE   u.m3.m3i4
 #define POSITION u.m3.m3l1

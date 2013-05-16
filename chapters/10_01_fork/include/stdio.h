@@ -29,4 +29,7 @@ PUBLIC int write(int fd, const void *buf, int count);
 PUBLIC int read(int fd, void *buf, int count);
 PUBLIC int unlink(const char *pathname);
 
+PUBLIC int fork();
+PUBLIC int getpid();
+
 #endif

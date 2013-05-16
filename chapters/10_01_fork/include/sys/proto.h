@@ -80,6 +80,11 @@ PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppino
 /* mm/main.c */
 PUBLIC void task_mm();
 
+/* mm/forkexit.c */
+PUBLIC int do_fork();
+PUBLIC void do_exit(int status);
+PUBLIC void do_wait();
+
 /* proc.c */
 PUBLIC void schedule();
 PUBLIC int ldt_seg_linear(PROCESS *p, int idx);
