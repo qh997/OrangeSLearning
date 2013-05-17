@@ -7,6 +7,13 @@
 
 PRIVATE void cleanup(struct proc *proc);
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_fork
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC int do_fork()
 {
     /********************/
@@ -107,12 +114,20 @@ PUBLIC int do_fork()
     return 0;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_exit
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int status
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC void do_exit(int status)
 {
     int pid = mm_msg.source;
     int parent_pid = proc_table[pid].p_parent;
     struct proc *p = &proc_table[pid];
 
+    /* 通知 FS */
     MESSAGE msg2fs;
     msg2fs.type = EXIT;
     msg2fs.PID = pid;
@@ -123,18 +138,25 @@ PUBLIC void do_exit(int status)
     p->exit_status = status;
 
     if (proc_table[parent_pid].p_flags & WAITING) {
+        /* 如果父进程正在 WAITING，则解除其 WAITING 状态 
+         * 并通知父进程，然后彻底清除本进程
+         */
         proc_table[parent_pid].p_flags &= ~WAITING;
-        cleanup(&proc_table[pid]);
+        cleanup(p);
     }
     else {
-        proc_table[pid].p_flags |= HANGING;
+        p->p_flags |= HANGING;
     }
 
     for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
         if (proc_table[i].p_parent == pid) {
+            /* 如果当前进程有子进程就将这些子进程的父进程设为 INIT */
             proc_table[i].p_parent = INIT;
             if ((proc_table[INIT].p_flags & WAITING) &&
                 (proc_table[i].p_flags & HANGING)) {
+                /* 如果 INIT 进程正在 WAITING，则解除其 WAITING 状态 
+                 * 并通知 INIT 进程，然后彻底清除子进程
+                 */
                 proc_table[INIT].p_flags &= ~WAITING;
                 cleanup(&proc_table[i]);
             }
@@ -142,25 +164,36 @@ PUBLIC void do_exit(int status)
     }
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: do_wait
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PUBLIC void do_wait()
 {
     int pid = mm_msg.source;
     int children = 0;
+
     struct proc *p_proc = proc_table;
     for (int i = 0; i < NR_TASKS + NR_PROCS; i++, p_proc++) {
         if (p_proc->p_parent == pid) {
             children++;
             if (p_proc->p_flags & HANGING) {
+                /* 如果有子进程正在 HANGING
+                 * 则彻底清除该子进程
+                 */
                 cleanup(p_proc);
                 return;
             }
         }
     }
 
-    if (children) {
+    if (children) { // 存在子进程，但没有子进程处于 HANGING
         proc_table[pid].p_flags |= WAITING;
     }
-    else {
+    else { // 没有子进程
         MESSAGE msg;
         msg.type = SYSCALL_RET;
         msg.PID = NO_TASK;
@@ -168,6 +201,13 @@ PUBLIC void do_wait()
     }
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: cleanup
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: struct proc *proc
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE void cleanup(struct proc *proc)
 {
     MESSAGE msg2parent;

@@ -186,7 +186,6 @@ void Init()
     else {
         printf("child is running, pid: %d\n", getpid());
         exit(123);
-        printf("child is exit\n");
     }
 
     while (1) {

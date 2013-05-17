@@ -452,6 +452,13 @@ PRIVATE int fs_fork()
     return 0;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: fs_exit
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE int fs_exit()
 {
     struct proc *p = &proc_table[fs_msg.PID];
