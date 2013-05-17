@@ -24,7 +24,7 @@ PUBLIC int kernel_main()
     /* 初始化进程表 */
     for (int i = 0;
          i < NR_TASKS + NR_PROCS;
-         i++, p++, t++, stk -= t->stacksize) {
+         i++, p++, t++) {
         /* 子进程预留 */
         if (i >= NR_TASKS + NR_NATIVE_PROCS) {
             p->p_flags = FREE_SLOT;
@@ -110,7 +110,8 @@ PUBLIC int kernel_main()
 
         /* 优先级 */
         p->priority = p->ticks = prio;
-        p->pid = i;
+        
+        stk -= t->stacksize;
     }
 
     k_reenter = 0;
