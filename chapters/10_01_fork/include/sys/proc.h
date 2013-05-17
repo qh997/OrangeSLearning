@@ -89,6 +89,10 @@ typedef struct task {
     STACK_SIZE_TESTC \
 )
 
+#define PROCS_BASE              0xA00000 /* 10 MB */
+#define PROC_IMAGE_SIZE_DEFAULT 0x100000 /*  1 MB */
+#define PROC_ORIGIN_STACK       0x400    /*  1 KB */
+
 #define proc2pid(x) (x - proc_table)
 
 #endif

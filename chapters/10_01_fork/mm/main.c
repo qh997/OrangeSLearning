@@ -53,3 +53,22 @@ PRIVATE void init_mm()
 
     printl("{MM} memsize:%dMB\n", memory_size / (1024 * 1024));
 }
+
+PUBLIC int alloc_mem(int pid, int memsize)
+{
+    assert(pid >= (NR_TASKS + NR_NATIVE_PROCS));
+    if (memsize > PROC_IMAGE_SIZE_DEFAULT) {
+        panic("unsupported memory request: %d. "
+              "(should be less than %d)",
+              memsize,
+              PROC_IMAGE_SIZE_DEFAULT);
+    }
+
+    int base = PROCS_BASE +
+        (pid - (NR_TASKS + NR_NATIVE_PROCS)) * PROC_IMAGE_SIZE_DEFAULT;
+
+    if (base + memsize >= memory_size)
+        panic("memory allocation failed. pid:%d", pid);
+
+    return base;
+}

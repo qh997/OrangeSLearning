@@ -143,5 +143,10 @@ typedef struct s_tss
 /* 线性地址 → 物理地址 */
 #define vir2phys(seg_base, vir) (u32)(((u32)seg_base) + (u32)(vir))
 #define makelinear(seg, off) (u32)(((u32)(seg2linear(seg))) + (u32)(off))
+#define reassembly(high, high_shift, mid, mid_shift, low) ( \
+            ((high) << (high_shift)) + \
+            ((mid)  << (mid_shift)) + \
+            (low) \
+        )
 
 #endif

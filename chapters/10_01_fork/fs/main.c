@@ -7,6 +7,7 @@
 PRIVATE void init_fs();
 PRIVATE void mkfs();
 PRIVATE void read_super_block(int dev);
+PRIVATE int fs_fork();
 
 /*****************************************************************************/
  //* FUNCTION NAME: task_fs
@@ -47,6 +48,10 @@ PUBLIC void task_fs()
 
             case RESUME_PROC:
                 src = fs_msg.PROC_NR; // 恢复最初请求的进程，如 TestB
+                break;
+
+            case FORK:
+                fs_msg.RETVAL = fs_fork();
                 break;
 
             default:
@@ -420,4 +425,18 @@ PRIVATE void read_super_block(int dev)
 
     super_block[i] = *psb;
     super_block[i].sb_dev = dev;
+}
+
+PRIVATE int fs_fork()
+{
+    int i;
+    struct proc* child = &proc_table[fs_msg.PID];
+    for (i = 0; i < NR_FILES; i++) {
+        if (child->filp[i]) {
+            child->filp[i]->fd_cnt++;
+            child->filp[i]->fd_inode->i_cnt++;
+        }
+    }
+
+    return 0;
 }

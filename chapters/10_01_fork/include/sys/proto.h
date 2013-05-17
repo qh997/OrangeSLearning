@@ -79,6 +79,7 @@ PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppino
 
 /* mm/main.c */
 PUBLIC void task_mm();
+PUBLIC int alloc_mem(int pid, int memsize);
 
 /* mm/forkexit.c */
 PUBLIC int do_fork();

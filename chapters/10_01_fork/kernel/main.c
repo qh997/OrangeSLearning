@@ -18,7 +18,7 @@ PUBLIC int kernel_main()
     disp_str("-----\"kernel_main\" begins-----\n");
 
     PROCESS *p = proc_table;
-    TASK *t = task_table;
+    TASK *t = 0;
     char *stk = task_stack + STACK_SIZE_TOTAL;
 
     /* 初始化进程表 */
@@ -78,10 +78,6 @@ PUBLIC int kernel_main()
                 DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5
             );
         }
-        memcpy(&p->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
-        p->ldts[0].attr1 = DA_C | priv << 5;
-        memcpy(&p->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
-        p->ldts[1].attr1 = DA_DRW | priv << 5;
 
         /* 代码段指向第一个 LDT */
         p->regs.cs = INDEX_LDT_C << 3 | SA_TIL | rpl;
@@ -107,6 +103,9 @@ PUBLIC int kernel_main()
         p->has_int_msg = 0;
         p->q_sending = 0;
         p->next_sending = 0;
+
+        for (int j = 0; j < NR_FILES; j++)
+            p->filp[j] = 0;
 
         /* 优先级 */
         p->priority = p->ticks = prio;

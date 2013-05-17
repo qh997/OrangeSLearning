@@ -82,6 +82,7 @@ PUBLIC int do_open()
 
         /* fd <- inode (connects file_descriptor with inode) */
         f_desc_table[i].fd_mode = flags;
+        f_desc_table[i].fd_cnt = 1;
         f_desc_table[i].fd_pos = 0;
         f_desc_table[i].fd_inode = pin;
 
@@ -124,7 +125,8 @@ PUBLIC int do_close()
     put_inode(pcaller->filp[fd]->fd_inode);
 
     /* 释放文件描述符表项 */
-    pcaller->filp[fd]->fd_inode = 0;
+    if (--pcaller->filp[fd]->fd_cnt == 0)
+        pcaller->filp[fd]->fd_inode = 0;
 
     /* 释放进程中描述符 */
     pcaller->filp[fd] = 0;

@@ -52,6 +52,7 @@ struct dir_entry {
 struct file_desc {
     int fd_mode;
     int fd_pos;
+    int fd_cnt;
     struct inode *fd_inode;
 };
 
