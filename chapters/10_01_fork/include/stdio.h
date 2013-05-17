@@ -31,5 +31,7 @@ PUBLIC int unlink(const char *pathname);
 
 PUBLIC int fork();
 PUBLIC int getpid();
+PUBLIC int wait(int *status);
+PUBLIC void exit(int status);
 
 #endif

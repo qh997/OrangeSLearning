@@ -179,11 +179,20 @@ void Init()
     int pid = fork();
     if (pid != 0) {
         printf("parent is running, child pid: %d\n", pid);
-        spin("parent");
+        int s;
+        int child = wait(&s);
+        printf("child (%d) exited with status: %d.\n", child, s);
     }
     else {
         printf("child is running, pid: %d\n", getpid());
-        spin("child");
+        exit(123);
+        printf("child is exit\n");
+    }
+
+    while (1) {
+        int s;
+        int child = wait(&s);
+        printf("child (%d) exited with status: %d.\n", child, s);
     }
 }
 

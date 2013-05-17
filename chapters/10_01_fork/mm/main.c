@@ -44,16 +44,6 @@ PUBLIC void task_mm()
     }
 }
 
-PRIVATE void init_mm()
-{
-    struct boot_params bp;
-    get_boot_params(&bp);
-
-    memory_size = bp.mem_size;
-
-    printl("{MM} memsize:%dMB\n", memory_size / (1024 * 1024));
-}
-
 PUBLIC int alloc_mem(int pid, int memsize)
 {
     assert(pid >= (NR_TASKS + NR_NATIVE_PROCS));
@@ -71,4 +61,19 @@ PUBLIC int alloc_mem(int pid, int memsize)
         panic("memory allocation failed. pid:%d", pid);
 
     return base;
+}
+
+PUBLIC int free_mem(int pid)
+{
+    return 0;
+}
+
+PRIVATE void init_mm()
+{
+    struct boot_params bp;
+    get_boot_params(&bp);
+
+    memory_size = bp.mem_size;
+
+    printl("{MM} memsize:%dMB\n", memory_size / (1024 * 1024));
 }

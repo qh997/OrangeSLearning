@@ -94,7 +94,9 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_MM_DIR)/main.o \
               $(OUT_LIB_DIR)/fork.o \
               $(OUT_LIB_DIR)/getpid.o \
-              $(OUT_MM_DIR)/forkexit.o
+              $(OUT_MM_DIR)/forkexit.o \
+              $(OUT_LIB_DIR)/wait.o \
+              $(OUT_LIB_DIR)/exit.o
 
 .PHONY: everytning all init clean install install_boot install_loader install_kernel
 
@@ -281,5 +283,13 @@ $(OUT_LIB_DIR)/getpid.o: $(LIB_PATH)/getpid.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_MM_DIR)/forkexit.o: mm/forkexit.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/wait.o: $(LIB_PATH)/wait.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/exit.o: $(LIB_PATH)/exit.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

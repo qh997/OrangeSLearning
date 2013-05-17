@@ -8,6 +8,7 @@ PRIVATE void init_fs();
 PRIVATE void mkfs();
 PRIVATE void read_super_block(int dev);
 PRIVATE int fs_fork();
+PRIVATE int fs_exit();
 
 /*****************************************************************************/
  //* FUNCTION NAME: task_fs
@@ -52,6 +53,10 @@ PUBLIC void task_fs()
 
             case FORK:
                 fs_msg.RETVAL = fs_fork();
+                break;
+
+            case EXIT:
+                fs_msg.RETVAL = fs_exit();
                 break;
 
             default:
@@ -394,8 +399,8 @@ PRIVATE void mkfs()
 /*****************************************************************************/
  //* FUNCTION NAME: read_super_block
  //*     PRIVILEGE: 1
- //*   RETURN TYPE: int dev
- //*    PARAMETERS: void
+ //*   RETURN TYPE: void
+ //*    PARAMETERS: int dev
  //*   DESCRIPTION: 读取指定设备的 super block
 /*****************************************************************************/
 PRIVATE void read_super_block(int dev)
@@ -427,14 +432,37 @@ PRIVATE void read_super_block(int dev)
     super_block[i].sb_dev = dev;
 }
 
+/*****************************************************************************/
+ //* FUNCTION NAME: fs_fork
+ //*     PRIVILEGE: 1
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: void
+ //*   DESCRIPTION: 
+/*****************************************************************************/
 PRIVATE int fs_fork()
 {
-    int i;
     struct proc* child = &proc_table[fs_msg.PID];
-    for (i = 0; i < NR_FILES; i++) {
+    for (int i = 0; i < NR_FILES; i++) {
         if (child->filp[i]) {
             child->filp[i]->fd_cnt++;
             child->filp[i]->fd_inode->i_cnt++;
+        }
+    }
+
+    return 0;
+}
+
+PRIVATE int fs_exit()
+{
+    struct proc *p = &proc_table[fs_msg.PID];
+    for (int i = 0; i < NR_FILES; i++) {
+        if (p->filp[i]) {
+            /* release the inode */
+            p->filp[i]->fd_inode->i_cnt--;
+            /* release the file desc slot */
+            if (--p->filp[i]->fd_cnt == 0)
+                p->filp[i]->fd_inode = 0;
+            p->filp[i] = 0;
         }
     }
 
