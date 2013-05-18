@@ -24,10 +24,11 @@ LDFLAGS  := -Ttext 0x1000 -m elf_i386
 RTLIB := $(OUT_LIB_DIR)/qhcrt.a
 
 ECHO_BIN := $(OUT_CMD_DIR)/echo
+PWD_BIN  := $(OUT_CMD_DIR)/pwd
 
-.PHONY: everytning
+.PHONY: everytning all clean install
 
-everytning: init $(ECHO_BIN)
+everytning: init $(ECHO_BIN) $(PWD_BIN)
 
 all: clean everytning install
 
@@ -38,11 +39,15 @@ init:
 	$(MKDIR_OUT_CMD)
 
 clean:
-	rm $(OUT_CMD_DIR)/start.o
-	rm $(OUT_CMD_DIR)/echo.o
-	rm $(ECHO_BIN)
+	-rm $(OUT_CMD_DIR)/start.o
+	-rm $(OUT_CMD_DIR)/echo.o
+	-rm $(ECHO_BIN)
+	-rm $(PWD_BIN)
+	-rm $(OUT_CMD_DIR)/inst.tar
 
 install:
+	cd $(OUT_CMD_DIR) && tar vcf inst.tar echo pwd
+	dd if=$(OUT_CMD_DIR)/inst.tar of=../80m.img seek=`echo "obase=10;ibase=16;(\`grep -E '^ROOT_BASE' ../boot/include/load.inc | sed -e 's/.*0x//g'\`+\`grep -E '#define\s+INSTALL_START_SECT' ../include/sys/config.h | \sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l $(OUT_CMD_DIR)/inst.tar | awk -F " " '{print $$5}'` conv=notrunc
 
 $(OUT_CMD_DIR)/start.o: start.asm
 	$(SHOW_ASMCPL) $@
@@ -53,5 +58,13 @@ $(OUT_CMD_DIR)/echo.o: echo.c
 	@$(CC) $(GCCFLAGs) -o $@ $<
 
 $(ECHO_BIN): $(OUT_CMD_DIR)/start.o $(OUT_CMD_DIR)/echo.o $(RTLIB)
+	$(SHOW_LDLNK) $@
+	@$(LD) $(LDFLAGS) -o $@ $^
+
+$(OUT_CMD_DIR)/pwd.o: pwd.c
+	$(SHOW_CCCPL) $@
+	@$(CC) $(GCCFLAGs) -o $@ $<
+
+$(PWD_BIN): $(OUT_CMD_DIR)/start.o $(OUT_CMD_DIR)/pwd.o $(RTLIB)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(LDFLAGS) -o $@ $^

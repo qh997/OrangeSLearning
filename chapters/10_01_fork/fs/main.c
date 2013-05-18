@@ -332,12 +332,13 @@ PRIVATE void mkfs()
     for (int i = 0; i < (NR_CONSOLES + 2); i++)
         fsbuf[0] |= 1 << i;
 
-    assert(fsbuf[0] == 0x1F); /* 0001 1111
-                               *    | |||`- bit 0 : reserved
-                               *    | ||`-- bit 1 : the frist inode which indicates '/'
-                               *    | |`--- bit 2 : /dev_tty0
-                               *    | `---- bit 3 : /dev_tty1
-                               *    `------ bit 4 : /dev_tty2
+    assert(fsbuf[0] == 0x1F); /* 0011 1111
+                               *   || |||`- bit 0 : reserved
+                               *   || ||`-- bit 1 : the frist inode which indicates '/'
+                               *   || |`--- bit 2 : /dev_tty0
+                               *   || `---- bit 3 : /dev_tty1
+                               *   |`------ bit 4 : /dev_tty2
+                               *   `------- bit 5 : /cmd.tar
                                */
     WR_SECT(ROOT_DEV, 2);
 
@@ -360,13 +361,34 @@ PRIVATE void mkfs()
     for (int i = 1; i < sb.nr_smap_sects; i++)
         WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + i);
 
+    /* cmd.tar */
+    int bit_offset = INSTALL_START_SECT - sb.n_1st_sect + 1; // sect M <-> bit (M - sb.n_1stsect + 1)
+    int bit_off_in_sect = bit_offset % (SECTOR_SIZE * 8);
+    int bit_left = INSTALL_NR_SECTS;
+    int cur_sect = bit_offset / (SECTOR_SIZE * 8);
+    RD_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + cur_sect);
+    while (bit_left) {
+        int byte_off = bit_off_in_sect / 8;
+        /* this line is ineffecient in a loop, but I don't care */
+        fsbuf[byte_off] |= 1 << (bit_off_in_sect % 8);
+        bit_left--;
+        bit_off_in_sect++;
+        if (bit_off_in_sect == (SECTOR_SIZE * 8)) {
+            WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + cur_sect);
+            cur_sect++;
+            RD_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + cur_sect);
+            bit_off_in_sect = 0;
+        }
+    }
+    WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + cur_sect);
+
     /***********************/
     /*        inodes       */
     /***********************/
     memset(fsbuf, 0x0, SECTOR_SIZE);
     struct inode *pi = (struct inode *)fsbuf;
     pi->i_mode = I_DIRECTORY;
-    pi->i_size = DIR_ENTRY_SIZE * 4;
+    pi->i_size = DIR_ENTRY_SIZE * 5; // 5 files
     pi->i_start_sect = sb.n_1st_sect;
     pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
     
@@ -377,6 +399,12 @@ PRIVATE void mkfs()
         pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
         pi->i_nr_sects = 0;
     }
+    /* inode of `/cmd.tar' */
+    pi = (struct inode*)(fsbuf + (INODE_SIZE * (NR_CONSOLES + 1)));
+    pi->i_mode = I_REGULAR;
+    pi->i_size = INSTALL_NR_SECTS * SECTOR_SIZE;
+    pi->i_start_sect = INSTALL_START_SECT;
+    pi->i_nr_sects = INSTALL_NR_SECTS;
     WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
     /***********************/
@@ -393,6 +421,8 @@ PRIVATE void mkfs()
         pde->inode_nr = i + 2;
         sprintf(pde->name, "dev_tty%d", i);
     }
+    (++pde)->inode_nr = NR_CONSOLES + 2;
+    strcpy(pde->name, "cmd.tar");
     WR_SECT(ROOT_DEV, sb.n_1st_sect);
 }
 

@@ -155,12 +155,15 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
-$(RUNTIME_LIB): out/lib/*.o
+$(RUNTIME_LIB): $(OUT_LIB_DIR)/kliba.o $(OUT_LIB_DIR)/string.o $(OUT_LIB_DIR)/klib.o $(OUT_LIB_DIR)/syscall.o \
+                $(OUT_LIB_DIR)/vsprintf.o  $(OUT_LIB_DIR)/printf.o $(OUT_LIB_DIR)/misc.o $(OUT_LIB_DIR)/open.o \
+                $(OUT_LIB_DIR)/close.o $(OUT_LIB_DIR)/write.o $(OUT_LIB_DIR)/read.o $(OUT_LIB_DIR)/unlink.o \
+                $(OUT_LIB_DIR)/fork.o $(OUT_LIB_DIR)/getpid.o $(OUT_LIB_DIR)/wait.o $(OUT_LIB_DIR)/exit.o
 	$(SHOW_ARPL) $@
 	@$(AR) $(AR_FLAG) $@ $^
 
 commands:
-	@cd command; make
+	@cd command; make all
 
 $(OUT_KERNEL_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sys/sconst.inc
 	$(SHOW_ASMCPL) $@

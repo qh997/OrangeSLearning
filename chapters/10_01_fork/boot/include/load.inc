@@ -13,3 +13,5 @@ PAGE_TBL_BASE  equ  101000h ; 页表开始地址: 1M + 4K
 
 BOOT_PARAM_ADDR   equ  0x900
 BOOT_PARAM_MAGIC  equ  0xB007
+
+ROOT_BASE  equ  0x4EFF
