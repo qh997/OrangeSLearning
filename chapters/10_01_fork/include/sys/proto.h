@@ -124,10 +124,6 @@ PUBLIC void scroll_screen(CONSOLE *p_con, int direction);
 PUBLIC int vsprintf(char *buf, const char *fmt, va_list args);
 PUBLIC int sprintf(char *buf, const char *fmt, ...);
 
-/* printf.c */
-PUBLIC int printf(const char *fmt, ...);
-PUBLIC int printl(const char *fmt, ...);
-
 /* misc.c */
 PUBLIC void spin(char *func_name);
 PUBLIC void assertion_failure(char *exp, char *file, char *base_file, int line);

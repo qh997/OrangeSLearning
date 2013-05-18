@@ -85,11 +85,11 @@ PUBLIC void in_process(TTY *tty, u32 key)
                 break;
             case UP:
                 if ((key & FLAG_SHIFT_L) || (key & FLAG_SHIFT_R))
-                    scroll_screen(tty->console, SCR_UP);
+                    scroll_screen(tty->console, SCR_DN);
                 break;
             case DOWN:
                 if ((key & FLAG_SHIFT_L) || (key & FLAG_SHIFT_R))
-                    scroll_screen(tty->console, SCR_DN);
+                    scroll_screen(tty->console, SCR_UP);
                 break;
             case F1: 
             case F2:
@@ -136,7 +136,7 @@ PUBLIC int sys_printx(PROCESS *p_proc, char *s)
             *v++ = *q++;
             *v++ = RED_CHAR;
             if (!*q) {
-                while (((int)v - V_MEM_BASE) % (SCREEN_WIDTH * 16)) {
+                while (((int)v - V_MEM_BASE) % (SCR_WIDTH * 16)) {
                     v++;
                     *v++ = GRAY_CHAR;
                 }

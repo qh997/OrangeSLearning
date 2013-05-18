@@ -1,5 +1,43 @@
 #include "const.h"
 #include "proto.h"
+#include "stdio.h"
+#include "string.h"
+
+/*****************************************************************************/
+ //* FUNCTION NAME: send_recv
+ //*     PRIVILEGE: 1 ~ 3
+ //*   RETURN TYPE: int
+ //*    PARAMETERS: int function - SEND/RECEIVE/BOTH
+ //*                int src_dest - 接受／发送者
+ //*                MESSAGE *msg - 消息体
+ //*   DESCRIPTION: 系统调用 sendrec 的封装，应避免直接调用 sendrec
+/*****************************************************************************/
+PUBLIC int send_recv(int function, int src_dest, MESSAGE *msg)
+{
+    int ret = 0;
+
+    if (function == RECEIVE)
+        memset(msg, 0, sizeof(MESSAGE));
+
+    switch (function) {
+        case BOTH:
+            ret = sendrec(SEND, src_dest, msg);
+            if (ret == 0)
+                ret = sendrec(RECEIVE, src_dest, msg);
+            break;
+        case SEND:
+        case RECEIVE:
+            ret = sendrec(function, src_dest, msg);
+            break;
+        default:
+            assert(function == BOTH ||
+                   function == SEND ||
+                   function == RECEIVE);
+            break;
+    }
+
+    return ret;
+}
 
 PUBLIC void spin(char *func_name)
 {

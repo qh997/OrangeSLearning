@@ -5,3 +5,5 @@ images/
 *.o
 bochsrc
 *.bxrc
+*.map
+out/

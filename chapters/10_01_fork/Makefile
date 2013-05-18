@@ -1,10 +1,12 @@
 ASM := nasm
-CC := gcc
-LD := ld
+CC  := gcc
+LD  := ld
+AR  := ar
 
 SHOW_ASMCPL := @echo -n ' COMPILE   ASM    '; echo
 SHOW_CCCPL  := @echo -n ' COMPILE    CC    '; echo 
 SHOW_LDLNK  := @echo -n ' LINK       LD    '; echo
+SHOW_ARPL   := @echo -n ' COMPILE    AR    '; echo 
 SHOW_INSTAL := @echo -n ' INSTALL  '; echo
 
 ENTRYPOINT := 0x30400
@@ -59,7 +61,7 @@ LOADER_BIN := $(OUT_DIR)/loader.bin
 KERNEL_INC := include
 KERNEL_ASM_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -f elf32
 KERNEL_GCC_FLAG := -I $(KERNEL_INC)/ -I $(KERNEL_INC)/sys/ -c -m32 -std=c99 -fno-builtin -nostdlib -Wall
-KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)
+KERNEL_LD_FLAG := -s -m elf_i386 -Ttext $(ENTRYPOINT)  -Map $(OUT_DIR)/krnl.map
 KERNEL_BIN := $(OUT_DIR)/kernel.bin
 KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_KERNEL_DIR)/start.o \
@@ -72,7 +74,7 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_KERNEL_DIR)/main.o \
               $(OUT_KERNEL_DIR)/clock.o \
               $(OUT_KERNEL_DIR)/proc.o \
-              $(OUT_KERNEL_DIR)/syscall.o \
+              $(OUT_LIB_DIR)/syscall.o \
               $(OUT_KERNEL_DIR)/keyboard.o \
               $(OUT_KERNEL_DIR)/tty.o \
               $(OUT_KERNEL_DIR)/console.o \
@@ -98,9 +100,12 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_LIB_DIR)/wait.o \
               $(OUT_LIB_DIR)/exit.o
 
-.PHONY: everytning all init clean install install_boot install_loader install_kernel
+AR_FLAG := rcs
+RUNTIME_LIB := $(OUT_LIB_DIR)/qhcrt.a
 
-everytning: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN)
+.PHONY: everytning all init clean install install_boot install_loader install_kernel commands
+
+everytning: init $(BOOT_BIN) $(LOADER_BIN) $(KERNEL_BIN) $(RUNTIME_LIB)
 	@echo
 
 all: clean everytning install
@@ -150,6 +155,13 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 	$(SHOW_LDLNK) $@
 	@$(LD) $(KERNEL_LD_FLAG) -o $@ $^
 
+$(RUNTIME_LIB): out/lib/*.o
+	$(SHOW_ARPL) $@
+	@$(AR) $(AR_FLAG) $@ $^
+
+commands:
+	@cd command; make
+
 $(OUT_KERNEL_DIR)/kernel.o: $(KERNEL_PATH)/kernel.asm include/sys/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
@@ -194,7 +206,7 @@ $(OUT_KERNEL_DIR)/proc.o: $(KERNEL_PATH)/proc.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
-$(OUT_KERNEL_DIR)/syscall.o: $(KERNEL_PATH)/syscall.asm include/sys/sconst.inc
+$(OUT_LIB_DIR)/syscall.o: $(LIB_PATH)/syscall.asm include/sys/sconst.inc
 	$(SHOW_ASMCPL) $@
 	@$(ASM) $(KERNEL_ASM_FLAG) -o $@ $<
 

@@ -1,6 +1,8 @@
 #ifndef _KERL__STDIO_H_
 #define _KERL__STDIO_H_
 
+#include "const.h"
+
 #define EXTERN extern
 
 #define STR_DEFAULT_LEN 1024
@@ -22,6 +24,9 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define assert(exp) \
     do {} while (0)
 #endif
+
+PUBLIC int printf(const char *fmt, ...);
+PUBLIC int printl(const char *fmt, ...);
 
 PUBLIC int open(const char *pathname, int flags);
 PUBLIC int close(int fd);
