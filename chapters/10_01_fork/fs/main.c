@@ -329,10 +329,10 @@ PRIVATE void mkfs()
     /*      inode Map      */
     /***********************/
     memset(fsbuf, 0x0, SECTOR_SIZE);
-    for (int i = 0; i < (NR_CONSOLES + 2); i++)
+    for (int i = 0; i < (NR_CONSOLES + 3); i++)
         fsbuf[0] |= 1 << i;
 
-    assert(fsbuf[0] == 0x1F); /* 0011 1111
+    assert(fsbuf[0] == 0x3F); /* 0011 1111
                                *   || |||`- bit 0 : reserved
                                *   || ||`-- bit 1 : the frist inode which indicates '/'
                                *   || |`--- bit 2 : /dev_tty0
