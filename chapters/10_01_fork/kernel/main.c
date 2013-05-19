@@ -235,6 +235,62 @@ void untar(const char * filename)
     printf(" done]\n");
 }
 
+void shabby_shell(const char *tty_name)
+{
+    int fd_stdin = open(tty_name, O_RDWR);
+    assert(0 == fd_stdin);
+    int fd_stdout = open(tty_name, O_RDWR);
+    assert(1 == fd_stdout);
+
+    char rdbuf[128];
+    while (1) {
+        printf("$ ");
+        int r = read(0, rdbuf, 70);
+        rdbuf[r] = 0;
+
+        int argc = 0;
+        char *argv[PROC_ORIGIN_STACK];
+        char *p = rdbuf;
+        char *s;
+        int word = 0;
+        char ch;
+        do {
+            ch = *p;
+            if (*p != ' ' && *p != 0 && !word) {
+                s = p;
+                word = 1;
+            }
+            if ((*p == ' ' || *p == 0) && word) {
+                word = 0;
+                argv[argc++] = s;
+                *p = 0;
+            }
+            p++;
+        } while(ch);
+        argv[argc] = 0;
+
+        int fd = open(argv[0], O_RDWR);
+        if (fd == -1) {
+            if (rdbuf[0]) {
+                write(1, "{", 1);
+                write(1, rdbuf, r);
+                write(1, "}\n", 2);
+            }
+        }
+        else {
+            close(fd);
+            int pid = fork();
+            if (pid != 0) { /* parent */
+                int s;
+                wait(&s);
+            }
+            else {  /* child */
+                execv(argv[0], argv);
+            }
+        }
+    }
+}
+
 void Init()
 {
     int fd_stdin = open("/dev_tty0", O_RDWR);
@@ -246,15 +302,21 @@ void Init()
 
     untar("/cmd.tar");
 
-    int pid = fork();
-    if (pid != 0) {
-        printf("parent is running, child pid: %d\n", pid);
-        int s;
-        int child = wait(&s);
-        printf("child (%d) exited with status: %d.\n", child, s);
-    }
-    else {
-        execl("/echo", "echo", "hello", "world", 0);
+    char *tty_list[] = {"/dev_tty1", "/dev_tty2"};
+
+    for (int i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) {
+        int pid = fork();
+        if (pid != 0) {
+            printf("[parent is running, child pid:%d]\n", pid);
+        }
+        else {
+            printf("[child is running, pid:%d]\n", getpid());
+            close(fd_stdin);
+            close(fd_stdout);
+
+            shabby_shell(tty_list[i]);
+            assert(0);
+        }
     }
 
     while (1) {
