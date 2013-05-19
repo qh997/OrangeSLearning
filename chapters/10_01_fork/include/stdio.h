@@ -25,6 +25,14 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
     do {} while (0)
 #endif
 
+struct stat {
+    int st_dev;
+    int st_ino;
+    int st_mode;
+    int st_rdev;
+    int st_size;
+};
+
 PUBLIC int printf(const char *fmt, ...);
 PUBLIC int printl(const char *fmt, ...);
 
@@ -38,5 +46,11 @@ PUBLIC int fork();
 PUBLIC int getpid();
 PUBLIC int wait(int *status);
 PUBLIC void exit(int status);
+
+PUBLIC int exec(const char *path);
+PUBLIC int execl(const char *path, const char *arg, ...);
+PUBLIC int execv(const char *path, char *argv[]);
+
+PUBLIC int stat(const char *path, struct stat *buf);
 
 #endif

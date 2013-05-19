@@ -31,6 +31,10 @@ PUBLIC void task_mm()
                 reply = 0;
                 break;
 
+            case EXEC:
+                mm_msg.RETVAL = do_exec();
+                break;
+
             default:
                 dump_msg("MM::unknown msg", &mm_msg);
                 assert(0);

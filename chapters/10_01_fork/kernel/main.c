@@ -246,8 +246,6 @@ void Init()
 
     untar("/cmd.tar");
 
-    spin("Init");
-
     int pid = fork();
     if (pid != 0) {
         printf("parent is running, child pid: %d\n", pid);
@@ -256,8 +254,7 @@ void Init()
         printf("child (%d) exited with status: %d.\n", child, s);
     }
     else {
-        printf("child is running, pid: %d\n", getpid());
-        exit(123);
+        execl("/echo", "echo", "hello", "world", 0);
     }
 
     while (1) {

@@ -74,6 +74,7 @@ PUBLIC int do_rdwt();
 PUBLIC int do_unlink();
 
 /* fs/misc.c */
+PUBLIC int do_stat();
 PUBLIC int search_file(char *path);
 PUBLIC int strip_path(char *filename, const char *pathname, struct inode **ppinode);
 
@@ -86,6 +87,9 @@ PUBLIC int free_mem(int pid);
 PUBLIC int do_fork();
 PUBLIC void do_exit(int status);
 PUBLIC void do_wait();
+
+/* mm/exec.c */
+PUBLIC int do_exec();
 
 /* proc.c */
 PUBLIC void schedule();

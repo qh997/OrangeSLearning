@@ -44,6 +44,10 @@ PUBLIC CONSOLE console_table[NR_CONSOLES];
 PUBLIC u8        *fsbuf     = (u8 *)0x600000;
 PUBLIC const int FSBUF_SIZE =       0x100000; // 1MB bytes
 
+/* MM */
+PUBLIC u8        *mmbuf     = (u8 *)0x700000;
+PUBLIC const int MMBUF_SIZE =       0x100000;
+
 /* 设备驱动 */
 struct dev_drv_map dd_map[] = {
     {INVALID_DRIVER}, // 0 : Unused

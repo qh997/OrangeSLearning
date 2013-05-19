@@ -98,7 +98,10 @@ KERNEL_OBJ := $(OUT_KERNEL_DIR)/kernel.o \
               $(OUT_LIB_DIR)/getpid.o \
               $(OUT_MM_DIR)/forkexit.o \
               $(OUT_LIB_DIR)/wait.o \
-              $(OUT_LIB_DIR)/exit.o
+              $(OUT_LIB_DIR)/exit.o \
+              $(OUT_LIB_DIR)/exec.o \
+              $(OUT_MM_DIR)/exec.o \
+              $(OUT_LIB_DIR)/stat.o
 
 AR_FLAG := rcs
 RUNTIME_LIB := $(OUT_LIB_DIR)/qhcrt.a
@@ -158,7 +161,8 @@ $(KERNEL_BIN): $(KERNEL_OBJ)
 $(RUNTIME_LIB): $(OUT_LIB_DIR)/kliba.o $(OUT_LIB_DIR)/string.o $(OUT_LIB_DIR)/klib.o $(OUT_LIB_DIR)/syscall.o \
                 $(OUT_LIB_DIR)/vsprintf.o  $(OUT_LIB_DIR)/printf.o $(OUT_LIB_DIR)/misc.o $(OUT_LIB_DIR)/open.o \
                 $(OUT_LIB_DIR)/close.o $(OUT_LIB_DIR)/write.o $(OUT_LIB_DIR)/read.o $(OUT_LIB_DIR)/unlink.o \
-                $(OUT_LIB_DIR)/fork.o $(OUT_LIB_DIR)/getpid.o $(OUT_LIB_DIR)/wait.o $(OUT_LIB_DIR)/exit.o
+                $(OUT_LIB_DIR)/fork.o $(OUT_LIB_DIR)/getpid.o $(OUT_LIB_DIR)/wait.o $(OUT_LIB_DIR)/exit.o \
+                $(OUT_LIB_DIR)/exec.o $(OUT_LIB_DIR)/stat.o
 	$(SHOW_ARPL) $@
 	@$(AR) $(AR_FLAG) $@ $^
 
@@ -306,5 +310,17 @@ $(OUT_LIB_DIR)/wait.o: $(LIB_PATH)/wait.c $(HEADS)
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
 
 $(OUT_LIB_DIR)/exit.o: $(LIB_PATH)/exit.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/exec.o: $(LIB_PATH)/exec.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_MM_DIR)/exec.o: mm/exec.c $(HEADS)
+	$(SHOW_CCCPL) $@
+	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<
+
+$(OUT_LIB_DIR)/stat.o: $(LIB_PATH)/stat.c $(HEADS)
 	$(SHOW_CCCPL) $@
 	@$(CC) $(KERNEL_GCC_FLAG) -o $@ $<

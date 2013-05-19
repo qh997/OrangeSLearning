@@ -50,8 +50,10 @@ EXTERN struct inode       inode_table[NR_INODE];
 EXTERN struct file_desc   f_desc_table[NR_FILE_DESC];
 
 /* MM */
-EXTERN MESSAGE mm_msg;
-EXTERN int     memory_size;
+EXTERN MESSAGE   mm_msg;
+extern u8        *mmbuf;
+extern const int MMBUF_SIZE;
+EXTERN int       memory_size;
 
 /* Miscs */
 EXTERN int    disp_pos;

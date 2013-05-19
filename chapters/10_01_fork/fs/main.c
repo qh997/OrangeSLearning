@@ -59,6 +59,10 @@ PUBLIC void task_fs()
                 fs_msg.RETVAL = fs_exit();
                 break;
 
+            case STAT:
+                fs_msg.RETVAL = do_stat();
+                break;
+
             default:
                 dump_msg("FS::unknown message:", &fs_msg);
                 assert(0);
