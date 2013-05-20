@@ -47,7 +47,7 @@ clean:
 
 install:
 	cd $(OUT_CMD_DIR) && tar vcf inst.tar echo pwd
-	dd if=$(OUT_CMD_DIR)/inst.tar of=../80m.img seek=`echo "obase=10;ibase=16;(\`grep -E '^ROOT_BASE' ../boot/include/load.inc | sed -e 's/.*0x//g'\`+\`grep -E '#define\s+INSTALL_START_SECT' ../include/sys/config.h | \sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l $(OUT_CMD_DIR)/inst.tar | awk -F " " '{print $$5}'` conv=notrunc
+	dd if=$(OUT_CMD_DIR)/inst.tar of=../80m.img seek=`echo "obase=10;ibase=16;(\`grep -E '^ROOT_BASE' ../boot/include/load.inc | sed -e 's/;.*//g' | sed -e 's/.*0x//g'\`+\`grep -E '#define\s+INSTALL_START_SECT' ../include/sys/config.h | \sed -e 's/.*0x//g'\`)*200" | bc` bs=1 count=`ls -l $(OUT_CMD_DIR)/inst.tar | awk -F " " '{print $$5}'` conv=notrunc
 
 $(OUT_CMD_DIR)/start.o: start.asm
 	$(SHOW_ASMCPL) $@
