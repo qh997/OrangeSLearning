@@ -172,25 +172,24 @@ PUBLIC void panic(const char *fmt, ...)
  * Borrowed from GNU `tar'
  */
 struct posix_tar_header
-{               /* byte offset */
-    char name[100];     /*   0 */
-    char mode[8];       /* 100 */
-    char uid[8];        /* 108 */
-    char gid[8];        /* 116 */
-    char size[12];      /* 124 */
-    char mtime[12];     /* 136 */
-    char chksum[8];     /* 148 */
-    char typeflag;      /* 156 */
-    char linkname[100]; /* 157 */
-    char magic[6];      /* 257 */
-    char version[2];    /* 263 */
-    char uname[32];     /* 265 */
-    char gname[32];     /* 297 */
-    char devmajor[8];   /* 329 */
-    char devminor[8];   /* 337 */
-    char prefix[155];   /* 345 */
-    /* 500 */
-};
+{                       // byte offset
+    char name[100];     //   0
+    char mode[8];       // 100
+    char uid[8];        // 108
+    char gid[8];        // 116
+    char size[12];      // 124
+    char mtime[12];     // 136
+    char chksum[8];     // 148
+    char typeflag;      // 156
+    char linkname[100]; // 157
+    char magic[6];      // 257
+    char version[2];    // 263
+    char uname[32];     // 265
+    char gname[32];     // 297
+    char devmajor[8];   // 329
+    char devminor[8];   // 337
+    char prefix[155];   // 345
+};                      // 500
 
 void untar(const char * filename)
 {
@@ -205,14 +204,15 @@ void untar(const char * filename)
         if (buf[0] == 0)
             break;
 
-        struct posix_tar_header * phdr = (struct posix_tar_header *)buf;
+        struct posix_tar_header *phdr = (struct posix_tar_header *)buf;
 
         /* calculate the file size */
-        char * p = phdr->size;
+        char *p = phdr->size;
         int f_len = 0;
         while (*p)
-            f_len = (f_len * 8) + (*p++ - '0'); /* octal */
+            f_len = (f_len * 8) + (*p++ - '0'); // octal
 
+        /* 创建文件（解包） */
         int bytes_left = f_len;
         int fdout = open(phdr->name, O_CREAT | O_RDWR);
         if (fdout == -1) {
@@ -272,19 +272,17 @@ void shabby_shell(const char *tty_name)
         int fd = open(argv[0], O_RDWR);
         if (fd == -1) {
             if (rdbuf[0]) {
-                write(1, "{", 1);
-                write(1, rdbuf, r);
-                write(1, "}\n", 2);
+                printf("{%s}\n", rdbuf);
             }
         }
         else {
             close(fd);
             int pid = fork();
-            if (pid != 0) { /* parent */
+            if (pid != 0) { // parent
                 int s;
                 wait(&s);
             }
-            else {  /* child */
+            else { // child
                 execv(argv[0], argv);
             }
         }

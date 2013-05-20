@@ -14,21 +14,23 @@ PUBLIC int do_stat()
     int name_len = fs_msg.NAME_LEN; /* length of filename */
     int src = fs_msg.source;    /* caller proc nr. */
     assert(name_len < MAX_PATH);
-    phys_copy((void*)va2la(TASK_FS, pathname),    /* to   */
-          (void*)va2la(src, fs_msg.PATHNAME), /* from */
-          name_len);
+    phys_copy(
+        (void*)va2la(TASK_FS, pathname),    /* to   */
+        (void*)va2la(src, fs_msg.PATHNAME), /* from */
+        name_len
+    );
     pathname[name_len] = 0; /* terminate the string */
 
     int inode_nr = search_file(pathname);
-    if (inode_nr == INVALID_INODE) {    /* file not found */
+    if (inode_nr == INVALID_INODE) { /* file not found */
         printl("{FS} FS::do_stat():: search_file() returns "
                "invalid inode: %s\n", pathname);
         return -1;
     }
 
-    struct inode * pin = 0;
+    struct inode *pin = 0;
 
-    struct inode * dir_inode;
+    struct inode *dir_inode;
     if (strip_path(filename, pathname, &dir_inode) != 0) {
         /* theoretically never fail here
          * (it would have failed earlier when
@@ -47,9 +49,11 @@ PUBLIC int do_stat()
 
     put_inode(pin);
 
-    phys_copy((void*)va2la(src, fs_msg.BUF), /* to   */
-          (void*)va2la(TASK_FS, &s),     /* from */
-          sizeof(struct stat));
+    phys_copy(
+        (void*)va2la(src, fs_msg.BUF), /* to   */
+        (void*)va2la(TASK_FS, &s),     /* from */
+        sizeof(struct stat)
+    );
 
     return 0;
 }

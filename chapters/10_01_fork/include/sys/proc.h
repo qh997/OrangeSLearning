@@ -89,9 +89,9 @@ typedef struct task {
     STACK_SIZE_TESTC \
 )
 
-#define PROCS_BASE              0xA00000 /* 10 MB */
-#define PROC_IMAGE_SIZE_DEFAULT 0x100000 /*  1 MB */
-#define PROC_ORIGIN_STACK       0x400    /*  1 KB */
+#define PROCS_BASE              0xA00000 // 10 MB：应用程序在内存中起始地址
+#define PROC_IMAGE_SIZE_DEFAULT 0x100000 //  1 MB：应用程序占内存大小
+#define PROC_ORIGIN_STACK       0x400    //  1 KB：参数栈大小（应用程序栈从 0xFFBFF 开始，向下生长）
 
 #define proc2pid(x) (x - proc_table)
 

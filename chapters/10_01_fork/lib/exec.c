@@ -21,9 +21,7 @@ PUBLIC int exec(const char *path)
 
 PUBLIC int execl(const char *path, const char *arg, ...)
 {
-    va_list parg = (va_list)(&arg);
-    char **p = (char **)parg;
-    return execv(path, p);
+    return execv(path, (char **)(&arg));
 }
 
 PUBLIC int execv(const char *path, char *argv[])
@@ -32,18 +30,21 @@ PUBLIC int execv(const char *path, char *argv[])
     char arg_stack[PROC_ORIGIN_STACK];
     int stack_len = 0;
 
-    while (*p++) {
+    /* 计算参数个数 */
+    while (*p++) { // 直到 *p == 0
         assert(stack_len + 2 * sizeof(char *) < PROC_ORIGIN_STACK);
         stack_len += sizeof(char *);
     }
-
     *((int *)(&arg_stack[stack_len])) = 0;
     stack_len += sizeof(char *);
 
+    /* 填充参数 */
     char **q = (char **)arg_stack;
     for (p = argv; *p != 0; p++) {
+        /* 字符串指针 */
         *q++ = &arg_stack[stack_len];
 
+        /* 字符串 */
         assert(stack_len + strlen(*p) + 1 < PROC_ORIGIN_STACK);
         strcpy(&arg_stack[stack_len], *p);
         stack_len += strlen(*p);
