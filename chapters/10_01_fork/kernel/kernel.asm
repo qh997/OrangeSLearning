@@ -78,7 +78,7 @@ BITS  32
     ; 00101000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
     ;           ┃■■■ Page Directory Table ■■■┃ PageDirBase = 1M
     ; 00100000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-    ;           ┃□□□□ Hardware  Reserved □□□□┃ B8000h ← gs
+    ;           ┃◆◆◆◆ Hardware  Reserved ◆◆◆◆┃ B8000h ← gs
     ;    9FC00h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
     ;           ┃■■■■■■■■ LOADER.BIN ■■■■■■■■┃ somewhere in LOADER ← esp
     ;    90000h ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
